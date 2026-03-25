@@ -50,6 +50,7 @@
 
 body {
   -webkit-font-smoothing: antialiased;
+  background: #000;
 }
 
 /* Hide scrollbar for prize cards */
@@ -201,8 +202,5 @@ input::placeholder {
   }
   body {
     @apply bg-background text-foreground;
-  }
-  html {
-    @apply font-sans;
   }
 }

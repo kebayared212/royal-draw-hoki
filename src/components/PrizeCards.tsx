@@ -1,7 +1,7 @@
 "use client";
 
 import { Swiper, SwiperSlide } from "swiper/react";
-import { FreeMode } from "swiper/modules";
+import { FreeMode, Autoplay } from "swiper/modules";
 import "swiper/css";
 
 interface Prize {
@@ -17,9 +17,12 @@ export default function PrizeCards({ prizes }: PrizeCardsProps) {
   return (
     <div className="px-4 py-5">
       <Swiper
-        modules={[FreeMode]}
+        modules={[FreeMode, Autoplay]}
         freeMode
-        slidesPerView={3.5}
+        loop
+        autoplay={{ delay: 0, disableOnInteraction: false }}
+        speed={3000}
+        slidesPerView={3}
         spaceBetween={12}
       >
         {prizes.map((item) => (

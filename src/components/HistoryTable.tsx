@@ -6,9 +6,47 @@ interface HistoryRow {
 
 interface HistoryTableProps {
   data: HistoryRow[];
+  bare?: boolean;
 }
 
-export default function HistoryTable({ data }: HistoryTableProps) {
+export default function HistoryTable({ data, bare = false }: HistoryTableProps) {
+  const table = (
+    <table className="w-full text-sm">
+      <thead>
+        <tr>
+          {["Periode", "Tanggal", "Nomor"].map((h) => (
+            <th
+              key={h}
+              className="py-2 font-normal text-center"
+              style={{ color: "#7a5030" }}
+            >
+              {h}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {data.map((row, i) => (
+          <tr
+            key={i}
+            style={{ background: i % 2 === 0 ? "#2a1200" : "#1e0e00" }}
+          >
+            <td className="py-3 text-center text-white">{row.periode}</td>
+            <td className="py-3 text-center text-white">{row.tanggal}</td>
+            <td
+              className="py-3 text-center font-semibold"
+              style={{ color: "#f0b020" }}
+            >
+              {row.nomor}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+
+  if (bare) return table;
+
   return (
     <div
       id="history"
@@ -20,39 +58,7 @@ export default function HistoryTable({ data }: HistoryTableProps) {
           History Pengeluaran Nomor
         </h2>
       </div>
-
-      <table className="w-full text-sm">
-        <thead>
-          <tr>
-            {["Periode", "Tanggal", "Nomor"].map((h) => (
-              <th
-                key={h}
-                className="py-2 font-normal text-center"
-                style={{ color: "#7a5030" }}
-              >
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((row, i) => (
-            <tr
-              key={i}
-              style={{ background: i % 2 === 0 ? "#2a1200" : "#1e0e00" }}
-            >
-              <td className="py-3 text-center text-white">{row.periode}</td>
-              <td className="py-3 text-center text-white">{row.tanggal}</td>
-              <td
-                className="py-3 text-center font-semibold"
-                style={{ color: "#f0b020" }}
-              >
-                {row.nomor}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {table}
     </div>
   );
 }

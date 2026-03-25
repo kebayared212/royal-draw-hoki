@@ -47,7 +47,7 @@ export default function HeroSection({ numbers, periode }: HeroSectionProps) {
             />
             <div className="absolute inset-0 flex items-center justify-center -top-3">
               <p
-                className="text-white font-medium"
+                className="text-white font-semibold"
                 style={{ fontSize: "clamp(9px, 2.8vw, 13px)" }}
               >
                 Periode :{" "}

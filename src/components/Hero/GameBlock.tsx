@@ -1,4 +1,57 @@
+"use client";
+
 import Image from "next/image";
+import { motion } from "motion/react";
+
+const CYCLES = 3;
+const STRIP_LENGTH = 10 * CYCLES; // 30 items before target
+
+function SlotDigit({ digit, index }: { digit: string; index: number }) {
+  // Target di index 0 (atas), spinning digits di bawah
+  // Strip bergerak dari y negatif → 0 = turun ke bawah = angka masuk dari atas
+  const strip = [
+    digit,
+    ...Array.from({ length: STRIP_LENGTH }, (_, i) => String(i % 10)),
+  ];
+
+  const startPct = -(STRIP_LENGTH / strip.length) * 100; // ≈ -96.77%
+  const startY  = `${startPct}%`;
+  const midY    = `${startPct * 0.1}%`; // 90% jarak sudah ditempuh, sisa 10% untuk snap
+  const finalY  = "0%";
+
+  return (
+    <div
+      style={{ height: "clamp(20px, 5.9vw, 34px)", overflow: "hidden" }}
+      className="w-auto"
+    >
+      <motion.div
+        initial={{ y: startY, filter: "blur(2px)" }}
+        animate={{
+          y:      [startY,       midY,          finalY],
+          filter: ["blur(2px)", "blur(2px)",   "blur(0px)"],
+        }}
+        transition={{
+          delay: 0,
+          duration: 1.4 + index * 0.3,
+          times: [0, 0.88, 1],
+          ease: ["linear", [0.1, 0, 0.2, 1]],
+        }}
+      >
+        {strip.map((d, i) => (
+          <Image
+            key={i}
+            src={`/images/number/${d}.png`}
+            alt={d}
+            width={480}
+            height={480}
+            className="w-auto"
+            style={{ height: "clamp(20px, 5.9vw, 34px)", display: "block" }}
+          />
+        ))}
+      </motion.div>
+    </div>
+  );
+}
 
 export default function GameBlock({ numbers }: { numbers: string }) {
   return (
@@ -30,6 +83,7 @@ export default function GameBlock({ numbers }: { numbers: string }) {
           }}
         />
       </div>
+
       {/* result */}
       <div className="relative z-40 top-1/2 -translate-y-5 flex justify-center">
         <Image
@@ -41,14 +95,10 @@ export default function GameBlock({ numbers }: { numbers: string }) {
         />
         <div className="absolute flex w-full h-full items-center justify-evenly px-[7%] -top-2.5">
           {numbers.split("").map((digit, i) => (
-            <Image
-              key={i}
-              src={`/images/number/${digit}.png`}
-              alt={digit}
-              width={480}
-              height={480}
-              className="w-auto object-contain "
-              style={{ height: "clamp(20px, 5.9vw, 34px)" }}
+            <SlotDigit
+              key={`${numbers}-${i}`}
+              digit={digit}
+              index={i}
             />
           ))}
         </div>
