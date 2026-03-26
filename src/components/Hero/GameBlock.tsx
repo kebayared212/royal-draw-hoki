@@ -8,8 +8,6 @@ import { useAudioManager } from "@/components/AudioManager";
 const CYCLES = 3;
 const STRIP_LENGTH = 10 * CYCLES;
 
-const INIT_DELAY = 2; // detik delay saat pertama load agar audio siap
-
 function SlotDigit({ digit, index, startDelay }: { digit: string; index: number; startDelay: number }) {
   const strip = [
     digit,
@@ -56,31 +54,51 @@ function SlotDigit({ digit, index, startDelay }: { digit: string; index: number;
 }
 
 export default function GameBlock({ numbers, spinKey = 0 }: { numbers: string; spinKey?: number }) {
-  const { playRoller, playLanding } = useAudioManager();
+  const { playRoller, playLanding, audioStarted } = useAudioManager();
 
-  const isInitialLoad = spinKey === 0;
-  const audioDelay = isInitialLoad ? INIT_DELAY * 1000 : 0;
+  // localKey = -1 berarti belum siap (menunggu user gesture via WelcomeDialog)
+  const localKey = spinKey === 0 ? (audioStarted ? 0 : -1) : spinKey;
 
   useEffect(() => {
+    if (localKey < 0) return;
     const duration = 2.2 + (numbers.length - 1) * 0.5 + 0.3;
 
-    const rollerTimer = setTimeout(() => {
-      playRoller(duration);
-    }, audioDelay);
-
-    const landingTimers = numbers.split("").map((_, i) => {
-      return setTimeout(() => {
-        playLanding(0);
-      }, audioDelay + (2.2 + i * 0.5) * 1000);
-    });
+    const rollerTimer = setTimeout(() => playRoller(duration), 0);
+    const landingTimers = numbers.split("").map((_, i) =>
+      setTimeout(() => playLanding(0), (2.2 + i * 0.5) * 1000)
+    );
 
     return () => {
       clearTimeout(rollerTimer);
       landingTimers.forEach(clearTimeout);
     };
-  }, [spinKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [localKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const startDelay = isInitialLoad ? INIT_DELAY : 0;
+  // Sebelum user klik dialog, tampilkan angka statik tanpa animasi
+  if (localKey < 0) {
+    return (
+      <div className="absolute w-full flex flex-col justify-center top-35 z-30">
+        <div className="flex justify-center relative">
+          <Image src="/images/game-text.png" alt="Game Text" width={1080} height={564} className="w-full h-auto max-w-50 shadow-2xl relative z-10" />
+          <div className="flex justify-center z-20 absolute top-4.5 right-1/2 translate-x-1/2">
+            <Image src="/images/angka-hoki-text.png" alt="Angka Hoki" width={1080} height={564} className="w-full h-auto max-w-36" />
+          </div>
+        </div>
+        <div className="relative z-40 top-1/2 -translate-y-5 flex justify-center">
+          <Image src="/images/result-frame.png" alt="" width={480} height={360} className="w-full h-auto max-w-98 mb-4" />
+          <div className="absolute flex w-full h-full items-center justify-evenly px-[7%] -top-2.5">
+            {numbers.split("").map((digit, i) => (
+              <div key={i} style={{ height: "clamp(20px, 5.9vw, 34px)", overflow: "hidden" }} className="w-auto">
+                <Image src={`/images/number/${digit}.png`} alt={digit} width={480} height={480} className="w-auto" style={{ height: "clamp(20px, 5.9vw, 34px)", display: "block" }} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const startDelay = 0;
 
   return (
     <div className="absolute w-full flex flex-col justify-center top-35 z-30">

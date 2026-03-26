@@ -1,18 +1,23 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Balls from "./Balls";
 import DiamondBlock from "./DiamondBlock";
-import GameBlock from "./GameBlock";
+
+const GameBlock = dynamic(() => import("./GameBlock"), { ssr: false });
 
 interface HeroSectionProps {
   numbers: string;
   periode: string;
-  countdownTargetMs: number;
+  countdownTargetMs: number;  // result_time (ms) jika aktif, periode_start jika upcoming
+  periodeEndMs: number;       // batas akhir tebakan (periode_end)
   periodeNumber: string;
+  resultPeriodeNumber: string;
   isActive: boolean;
 }
+
 
 const NOTCH_BG = "#0e0700";
 
@@ -92,7 +97,13 @@ function DigitPair({ value, label }: { value: number; label: string }) {
   );
 }
 
-function CountdownDisplay({ remaining, isActive }: { remaining: number; isActive: boolean }) {
+const PHASE_LABEL: Record<string, string> = {
+  tutup:    "✦ Tutup Tebakan ✦",
+  hasil:    "✦ Menunggu Hasil ✦",
+  upcoming: "✦ Periode Berikutnya ✦",
+};
+
+function CountdownDisplay({ remaining, phase }: { remaining: number; phase: string }) {
   const total = Math.max(0, Math.floor(remaining / 1000));
   const h = Math.floor(total / 3600);
   const m = Math.floor((total % 3600) / 60);
@@ -111,7 +122,7 @@ function CountdownDisplay({ remaining, isActive }: { remaining: number; isActive
         className="text-center font-bold uppercase tracking-widest mb-3"
         style={{ fontSize: "9px", color: "#FAB861", opacity: 0.7 }}
       >
-        {isActive ? "✦ Menunggu Hasil ✦" : "✦ Periode Berikutnya ✦"}
+        {PHASE_LABEL[phase] ?? PHASE_LABEL.hasil}
       </p>
       <div className="flex items-center justify-center gap-2">
         <DigitPair value={h} label="jam" />
@@ -155,32 +166,40 @@ async function fetchResultWithRetry(
   onDone();
 }
 
-export default function HeroSection({ numbers, periode, countdownTargetMs, periodeNumber, isActive }: HeroSectionProps) {
+export default function HeroSection({ numbers, periode, countdownTargetMs, periodeEndMs, periodeNumber, resultPeriodeNumber, isActive }: HeroSectionProps) {
   const [spinKey, setSpinKey] = useState(0);
   const [remaining, setRemaining] = useState(0);
+  const [phase, setPhase] = useState("upcoming");
   const [currentNumbers, setCurrentNumbers] = useState(numbers);
 
   useEffect(() => {
     if (!countdownTargetMs) return;
 
-    const id = setInterval(() => {
-      const left = Math.max(0, countdownTargetMs - Date.now());
+    const tick = () => {
+      const now = Date.now();
+      const isTutup = isActive && periodeEndMs > 0 && now < periodeEndMs;
+      const isHasil = isActive && (!periodeEndMs || now >= periodeEndMs);
+
+      const target = isTutup ? periodeEndMs : countdownTargetMs;
+      const left = Math.max(0, target - now);
+
+      setPhase(isTutup ? "tutup" : isHasil ? "hasil" : "upcoming");
       setRemaining(left);
-      if (left === 0) {
+
+      // Trigger animasi hanya saat result_time tercapai
+      if (isHasil && left === 0) {
         clearInterval(id);
         fetchResultWithRetry(periodeNumber, 5, 3000, setCurrentNumbers, () =>
           setSpinKey((k) => k + 1)
         );
       }
-    }, 1000);
+    };
 
-    // Set nilai awal via setTimeout agar tidak synchronous di dalam effect
-    const initId = setTimeout(() => {
-      setRemaining(Math.max(0, countdownTargetMs - Date.now()));
-    }, 0);
+    const id = setInterval(tick, 1000);
+    const initId = setTimeout(tick, 0);
 
     return () => { clearTimeout(initId); clearInterval(id); };
-  }, [countdownTargetMs, periodeNumber]);
+  }, [countdownTargetMs, periodeEndMs, periodeNumber, isActive]);
 
   return (
     <div className="relative">
@@ -222,13 +241,13 @@ export default function HeroSection({ numbers, periode, countdownTargetMs, perio
               >
                 Periode :{" "}
                 <span className="font-bold" style={{ color: "#fde047" }}>
-                  {periode}
+                  {resultPeriodeNumber || periodeNumber || periode || "-"}
                 </span>
               </p>
             </div>
           </div>
 
-          <CountdownDisplay remaining={remaining} isActive={isActive} />
+          <CountdownDisplay remaining={remaining} phase={phase} />
         </div>
       </div>
     </div>

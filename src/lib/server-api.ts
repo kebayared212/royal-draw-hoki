@@ -41,6 +41,7 @@ interface RawResultItem {
   result: string | null;
   result_time: string;
   periode_end: string;
+  periode_start: string;
 }
 
 interface RawPrizeItem {
@@ -137,12 +138,15 @@ export async function fetchResults(take = 10): Promise<HistoryRow[]> {
       cache: 'no-store',
     });
     const json = await res.json() as { data?: RawResultItem[] };
+    const now = Date.now();
     return (json.data ?? [])
-      .filter((item) => item.result)
+      .filter((item) =>
+        item.result && new Date(item.result_time).getTime() <= now
+      )
       .map((item) => ({
         periode: Number(item.periode),
         tanggal: formatDateShortWIB(item.periode_end ?? item.result_time),
-        nomor: item.result ?? '-',
+        nomor: item.result!,
       }));
   } catch {
     return [];

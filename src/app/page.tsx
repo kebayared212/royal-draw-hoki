@@ -12,13 +12,9 @@ export default async function Home() {
     fetchPrizes(),
   ]);
 
-  // Jika result_time belum tercapai, skip periode yang sedang berjalan dari history
-  // supaya yang ditampilkan adalah result periode sebelumnya.
-  const resultTimeReached = periode?.resultTimeReached ?? true;
-  const displayHistory = resultTimeReached
-    ? history
-    : history.filter((h) => String(h.periode) !== periode?.periodeNumber);
-  const numbers = displayHistory[0]?.nomor ?? "00000000";
+  // history sudah bersih dari server — hanya berisi result yang result_time-nya sudah lewat
+  const numbers = history[0]?.nomor ?? "00000000";
+  const resultPeriodeNumber = String(history[0]?.periode ?? "");
 
   const periodeDisplay = periode?.periodeDisplay ?? "-";
   const periodeId = periode?.periodeId ?? "";
@@ -27,6 +23,8 @@ export default async function Home() {
   const tutup = periode?.tutupDisplay ?? "-";
   const countdownTargetMs = periode?.countdownTargetMs ?? 0;
   const periodeEndMs = periode?.periodeEndMs ?? 0;
+  const isActive = periode?.isActive ?? false;
+  const periodeStartDisplay = periode?.periodeStartDisplay ?? "-";
 
   return (
     <div className="relative min-h-screen font-sans text-white w-full overflow-hidden">
@@ -34,8 +32,10 @@ export default async function Home() {
         numbers={numbers}
         periode={periodeDisplay}
         countdownTargetMs={countdownTargetMs}
+        periodeEndMs={periodeEndMs}
         periodeNumber={periodeNumber}
-        isActive={periode?.isActive ?? false}
+        resultPeriodeNumber={resultPeriodeNumber}
+        isActive={isActive}
       />
       <PrizeCards prizes={prizes} />
       <SyaratKetentuan />
@@ -45,8 +45,8 @@ export default async function Home() {
         keluaran={keluaran}
         tutup={tutup}
         periodeEndMs={periodeEndMs}
-        isActive={periode?.isActive ?? false}
-        periodeStartDisplay={periode?.periodeStartDisplay ?? "-"}
+        isActive={isActive}
+        periodeStartDisplay={periodeStartDisplay}
       />
       <HistoryTable data={history} />
       {/* Bottom ambient glow */}

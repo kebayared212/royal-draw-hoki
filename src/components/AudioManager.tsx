@@ -17,11 +17,15 @@ const BG_URL     = "https://media-splash.com/assets/sound/wild-west.mp3";
 interface AudioManagerCtx {
   playRoller: (duration: number) => void;
   playLanding: (delayMs: number) => void;
+  startAudio: () => void;
+  audioStarted: boolean;
 }
 
 const Ctx = createContext<AudioManagerCtx>({
   playRoller: () => {},
   playLanding: () => {},
+  startAudio: () => {},
+  audioStarted: false,
 });
 
 export function useAudioManager() {
@@ -76,23 +80,31 @@ export function AudioManager({ children }: { children: React.ReactNode }) {
     const buf = rollerBufRef.current;
     if (!buf) return;
 
-    try { rollerNodeRef.current?.stop(); } catch { /* already stopped */ }
+    const startRoller = () => {
+      try { rollerNodeRef.current?.stop(); } catch { /* already stopped */ }
 
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.7, ctx.currentTime + 0.1);         // fade in
-    gain.gain.setValueAtTime(0.7, ctx.currentTime + duration - 0.4);
-    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + duration);      // fade out
-    gain.connect(ctx.destination);
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.7, ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.7, ctx.currentTime + duration - 0.4);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + duration);
+      gain.connect(ctx.destination);
 
-    const source = ctx.createBufferSource();
-    source.buffer = buf;
-    source.loop = true;
-    source.connect(gain);
-    source.start(ctx.currentTime);
-    source.stop(ctx.currentTime + duration);
+      const source = ctx.createBufferSource();
+      source.buffer = buf;
+      source.loop = true;
+      source.connect(gain);
+      source.start(ctx.currentTime);
+      source.stop(ctx.currentTime + duration);
 
-    rollerNodeRef.current = source;
+      rollerNodeRef.current = source;
+    };
+
+    if (ctx.state === "suspended") {
+      ctx.resume().then(startRoller).catch(() => {});
+    } else {
+      startRoller();
+    }
   }, [muted]);
 
   // Landing: play reveal.mp3 sekali per digit
@@ -104,19 +116,35 @@ export function AudioManager({ children }: { children: React.ReactNode }) {
       const buf = revealBufRef.current;
       if (!buf) return;
 
-      const gain = ctx.createGain();
-      gain.gain.value = 0.85;
-      gain.connect(ctx.destination);
+      const startLanding = () => {
+        const gain = ctx.createGain();
+        gain.gain.value = 0.85;
+        gain.connect(ctx.destination);
 
-      const source = ctx.createBufferSource();
-      source.buffer = buf;
-      source.connect(gain);
-      source.start(ctx.currentTime);
+        const source = ctx.createBufferSource();
+        source.buffer = buf;
+        source.connect(gain);
+        source.start(ctx.currentTime);
+      };
+
+      if (ctx.state === "suspended") {
+        ctx.resume().then(startLanding).catch(() => {});
+      } else {
+        startLanding();
+      }
     }, delayMs);
   }, [muted]);
 
+  const startAudio = useCallback(() => {
+    if (started) return;
+    getCtx().resume().catch(() => {});
+    bgRef.current?.play().catch(() => {});
+    setStarted(true);
+  }, [started]);
+
   const handleToggle = () => {
     if (!started) {
+      getCtx().resume().catch(() => {});
       bgRef.current?.play().catch(() => {});
       setStarted(true);
     }
@@ -124,7 +152,7 @@ export function AudioManager({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <Ctx.Provider value={{ playRoller, playLanding }}>
+    <Ctx.Provider value={{ playRoller, playLanding, startAudio, audioStarted: started }}>
       {children}
 
       <button

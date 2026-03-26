@@ -1,8 +1,6 @@
 "use client";
 
-import { Swiper, SwiperSlide } from "swiper/react";
-import { FreeMode, Autoplay } from "swiper/modules";
-import "swiper/css";
+import dynamic from "next/dynamic";
 
 interface Prize {
   type: string;
@@ -13,48 +11,8 @@ interface PrizeCardsProps {
   prizes: Prize[];
 }
 
+const PrizeCardsSwiper = dynamic<{ prizes: Prize[] }>(() => import("./PrizeCardsSwiper"), { ssr: false });
+
 export default function PrizeCards({ prizes }: PrizeCardsProps) {
-  return (
-    <div className="px-4 py-5">
-      <Swiper
-        modules={[FreeMode, Autoplay]}
-        freeMode
-        loop
-        autoplay={{ delay: 0, disableOnInteraction: false }}
-        speed={3000}
-        slidesPerView={3}
-        spaceBetween={12}
-      >
-        {prizes.map((item) => (
-          <SwiperSlide key={item.type} style={{ marginTop: "12px" }}>
-            <div className="flex flex-col items-center">
-              {/* Tonjolan type game */}
-              <div
-                className="font-bold text-sm px-3 py-0.5 rounded-full z-10"
-                style={{
-                  background: "linear-gradient(180deg, #FAB861 0%, #F79009 100%)",
-                  color: "#ffffff",
-                  marginBottom: "-10px",
-                  boxShadow: "0 2px 8px rgba(255,140,0,0.6)",
-                  textShadow: "0 1px 2px rgba(0,0,0,0.3)",
-                }}
-              >
-                {item.type}
-              </div>
-              {/* Card body */}
-              <div className="w-full rounded-3xl pt-4 pb-2 px-5 text-center prize-card">
-                <div className="text-white text-[12px] opacity-80">Hadiah :</div>
-                <div
-                  className="font-extrabold text-lg italic"
-                  style={{ color: "#FFA100", textShadow: "0 1px 3px rgba(0,0,0,0.4)" }}
-                >
-                  {item.prize}
-                </div>
-              </div>
-            </div>
-          </SwiperSlide>
-        ))}
-      </Swiper>
-    </div>
-  );
+  return <PrizeCardsSwiper prizes={prizes} />;
 }
