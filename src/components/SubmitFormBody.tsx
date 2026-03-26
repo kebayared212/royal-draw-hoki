@@ -70,7 +70,7 @@ export default function SubmitFormBody({ periodeId, periodeNumber, keluaran, tut
           username: userId.trim(),
           brand: "dewabet",
           tier,
-          game: "royaldraw",
+          game: "royal-draw",
           bet: Number(tebakAngka.trim()),
           periode: periodeId,
         }),

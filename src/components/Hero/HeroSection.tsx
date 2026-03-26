@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Balls from "./Balls";
 import DiamondBlock from "./DiamondBlock";
+const ResultNotification = dynamic(() => import("@/components/ResultNotification"), { ssr: false });
+const DevPreview = dynamic(() => import("./DevPreview"), { ssr: false });
 
 const GameBlock = dynamic(() => import("./GameBlock"), { ssr: false });
 
@@ -166,11 +168,50 @@ async function fetchResultWithRetry(
   onDone();
 }
 
+interface NotifState {
+  show: boolean;
+  status: "win" | "lose" | "no_bet";
+  bet: string;
+  result: string;
+}
+
 export default function HeroSection({ numbers, periode, countdownTargetMs, periodeEndMs, periodeNumber, resultPeriodeNumber, isActive }: HeroSectionProps) {
   const [spinKey, setSpinKey] = useState(0);
   const [remaining, setRemaining] = useState(0);
   const [phase, setPhase] = useState("upcoming");
   const [currentNumbers, setCurrentNumbers] = useState(numbers);
+  const [notif, setNotif] = useState<NotifState>({ show: false, status: "no_bet", bet: "", result: "" });
+  const pendingNomorRef = useRef<string | null>(null);
+
+  const showNotifAfterAnimation = (nomor: string) => {
+    // Delay = durasi animasi digit terakhir + buffer
+    const animMs = (2.2 + (nomor.length - 1) * 0.5 + 0.8) * 1000;
+
+    setTimeout(async () => {
+      try {
+        const res = await fetch("/api/game/player", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: "shaggy", brand: "dewabet" }),
+        });
+        const data = await res.json() as {
+          history?: { tier: string; bet: string; status: string; periode: string; game: string }[];
+        };
+
+        const entry = (data.history ?? []).find(
+          (h) => h.periode === String(periodeNumber) && h.game === "royal-draw"
+        );
+
+        if (!entry) {
+          setNotif({ show: true, status: "no_bet", bet: "", result: nomor });
+          return;
+        }
+
+        const status = nomor.endsWith(entry.bet) ? "win" : "lose";
+        setNotif({ show: true, status, bet: entry.bet, result: nomor });
+      } catch { /* jika gagal fetch, tidak tampilkan notif */ }
+    }, animMs);
+  };
 
   useEffect(() => {
     if (!countdownTargetMs) return;
@@ -189,8 +230,19 @@ export default function HeroSection({ numbers, periode, countdownTargetMs, perio
       // Trigger animasi hanya saat result_time tercapai
       if (isHasil && left === 0) {
         clearInterval(id);
-        fetchResultWithRetry(periodeNumber, 5, 3000, setCurrentNumbers, () =>
-          setSpinKey((k) => k + 1)
+        fetchResultWithRetry(
+          periodeNumber, 5, 3000,
+          (nomor) => {
+            setCurrentNumbers(nomor);
+            pendingNomorRef.current = nomor;
+          },
+          () => {
+            setSpinKey((k) => k + 1);
+            if (pendingNomorRef.current) {
+              showNotifAfterAnimation(pendingNomorRef.current);
+              pendingNomorRef.current = null;
+            }
+          }
         );
       }
     };
@@ -199,10 +251,21 @@ export default function HeroSection({ numbers, periode, countdownTargetMs, perio
     const initId = setTimeout(tick, 0);
 
     return () => { clearTimeout(initId); clearInterval(id); };
-  }, [countdownTargetMs, periodeEndMs, periodeNumber, isActive]);
+  }, [countdownTargetMs, periodeEndMs, periodeNumber, isActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="relative">
+      <ResultNotification
+        {...notif}
+        onClose={() => setNotif((n) => ({ ...n, show: false }))}
+      />
+
+      <DevPreview
+        onWin={() => setNotif({ show: true, status: "win", bet: "1234", result: "56781234" })}
+        onLose={() => setNotif({ show: true, status: "lose", bet: "9999", result: "56781234" })}
+        onNoBet={() => setNotif({ show: true, status: "no_bet", bet: "", result: "56781234" })}
+      />
+
       {/* Radial rays */}
       <div
         className="absolute inset-x-0 top-0 h-[150%] pointer-events-none radial-rays -z-10"

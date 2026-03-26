@@ -87,10 +87,8 @@ export default function GameBlock({ numbers, spinKey = 0 }: { numbers: string; s
         <div className="relative z-40 top-1/2 -translate-y-5 flex justify-center">
           <Image src="/images/result-frame.png" alt="" width={480} height={360} className="w-full h-auto max-w-98 mb-4" />
           <div className="absolute flex w-full h-full items-center justify-evenly px-[7%] -top-2.5">
-            {numbers.split("").map((digit, i) => (
-              <div key={i} style={{ height: "clamp(20px, 5.9vw, 34px)", overflow: "hidden" }} className="w-auto">
-                <Image src={`/images/number/${digit}.png`} alt={digit} width={480} height={480} className="w-auto" style={{ height: "clamp(20px, 5.9vw, 34px)", display: "block" }} />
-              </div>
+            {numbers.split("").map((_, i) => (
+              <div key={i} style={{ height: "clamp(20px, 5.9vw, 34px)", width: "clamp(14px, 4vw, 22px)", overflow: "hidden", borderRadius: 4, background: "rgba(255,255,255,0.05)" }} />
             ))}
           </div>
         </div>
