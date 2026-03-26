@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Balls from "./Balls";
 import DiamondBlock from "./DiamondBlock";
@@ -6,12 +9,182 @@ import GameBlock from "./GameBlock";
 interface HeroSectionProps {
   numbers: string;
   periode: string;
+  countdownTargetMs: number;
+  periodeNumber: string;
+  isActive: boolean;
 }
 
-export default function HeroSection({ numbers, periode }: HeroSectionProps) {
+const NOTCH_BG = "#0e0700";
+
+function FlipCard({ value }: { value: string }) {
+  return (
+    <div
+      className="relative shrink-0"
+      style={{
+        width: "clamp(46px, 13vw, 64px)",
+        height: "clamp(38px, 10.5vw, 54px)",
+        borderRadius: 8,
+        boxShadow: "0 0 10px rgba(250,184,97,0.25), 0 2px 6px rgba(0,0,0,0.6)",
+        border: "1px solid rgba(250,184,97,0.35)",
+      }}
+    >
+      {/* Card */}
+      <div
+        className="absolute inset-0 flex items-center justify-center overflow-hidden"
+        style={{
+          background: "linear-gradient(180deg, #2a1200 0%, #0e0600 100%)",
+          borderRadius: 7,
+        }}
+      >
+        <span
+          className="font-black select-none tabular-nums"
+          style={{
+            fontSize: "clamp(20px, 5.5vw, 30px)",
+            color: "#FFEB33",
+            lineHeight: 1,
+            textShadow: "0 0 8px rgba(255,235,51,0.7)",
+          }}
+        >
+          {value}
+        </span>
+      </div>
+      {/* Left notch */}
+      <div
+        className="absolute rounded-full"
+        style={{
+          width: 7,
+          height: 7,
+          background: NOTCH_BG,
+          left: -3.5,
+          top: "50%",
+          transform: "translateY(-50%)",
+          border: "1px solid rgba(250,184,97,0.2)",
+        }}
+      />
+      {/* Right notch */}
+      <div
+        className="absolute rounded-full"
+        style={{
+          width: 7,
+          height: 7,
+          background: NOTCH_BG,
+          right: -3.5,
+          top: "50%",
+          transform: "translateY(-50%)",
+          border: "1px solid rgba(250,184,97,0.2)",
+        }}
+      />
+    </div>
+  );
+}
+
+function DigitPair({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <FlipCard value={String(value).padStart(2, "0")} />
+      <span
+        className="font-bold uppercase tracking-widest"
+        style={{ fontSize: "8px", color: "#FAB861", opacity: 0.7 }}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function CountdownDisplay({ remaining, isActive }: { remaining: number; isActive: boolean }) {
+  const total = Math.max(0, Math.floor(remaining / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+
+  return (
+    <div
+      className="mt-3 rounded-2xl px-5 py-3"
+      style={{
+        background: "linear-gradient(180deg, #1a0c00 0%, #0e0700 100%)",
+        border: "1px solid rgba(250,184,97,0.25)",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(250,184,97,0.1)",
+      }}
+    >
+      <p
+        className="text-center font-bold uppercase tracking-widest mb-3"
+        style={{ fontSize: "9px", color: "#FAB861", opacity: 0.7 }}
+      >
+        {isActive ? "✦ Menunggu Hasil ✦" : "✦ Periode Berikutnya ✦"}
+      </p>
+      <div className="flex items-center justify-center gap-2">
+        <DigitPair value={h} label="jam" />
+        <span
+          className="font-black mb-4"
+          style={{ fontSize: "clamp(16px, 4.5vw, 22px)", color: "#FAB861", opacity: 0.5 }}
+        >
+          :
+        </span>
+        <DigitPair value={m} label="menit" />
+        <span
+          className="font-black mb-4"
+          style={{ fontSize: "clamp(16px, 4.5vw, 22px)", color: "#FAB861", opacity: 0.5 }}
+        >
+          :
+        </span>
+        <DigitPair value={s} label="detik" />
+      </div>
+    </div>
+  );
+}
+
+async function fetchResultWithRetry(
+  periodeNumber: string,
+  maxRetries: number,
+  delayMs: number,
+  onResult: (nomor: string) => void,
+  onDone: () => void
+) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, delayMs));
+    try {
+      const res = await fetch(`/api/game/result?periode=${periodeNumber}`);
+      const data = await res.json() as { nomor: string | null };
+      if (data.nomor) {
+        onResult(data.nomor);
+        break;
+      }
+    } catch { /* lanjut retry */ }
+  }
+  onDone();
+}
+
+export default function HeroSection({ numbers, periode, countdownTargetMs, periodeNumber, isActive }: HeroSectionProps) {
+  const [spinKey, setSpinKey] = useState(0);
+  const [remaining, setRemaining] = useState(0);
+  const [currentNumbers, setCurrentNumbers] = useState(numbers);
+
+  useEffect(() => {
+    if (!countdownTargetMs) return;
+
+    const id = setInterval(() => {
+      const left = Math.max(0, countdownTargetMs - Date.now());
+      setRemaining(left);
+      if (left === 0) {
+        clearInterval(id);
+        fetchResultWithRetry(periodeNumber, 5, 3000, setCurrentNumbers, () =>
+          setSpinKey((k) => k + 1)
+        );
+      }
+    }, 1000);
+
+    // Set nilai awal via setTimeout agar tidak synchronous di dalam effect
+    const initId = setTimeout(() => {
+      setRemaining(Math.max(0, countdownTargetMs - Date.now()));
+    }, 0);
+
+    return () => { clearTimeout(initId); clearInterval(id); };
+  }, [countdownTargetMs, periodeNumber]);
+
   return (
     <div className="relative">
-      {/* Radial rays — h-[150%] supaya bisa meluber ke bawah section, tidak terpotong */}
+      {/* Radial rays */}
       <div
         className="absolute inset-x-0 top-0 h-[150%] pointer-events-none radial-rays -z-10"
         style={{
@@ -23,18 +196,15 @@ export default function HeroSection({ numbers, periode }: HeroSectionProps) {
       />
       <div
         className="circle-bg pointer-events-none -z-10"
-        style={{
-          top: "-181px",
-          left: "51%",
-        }}
+        style={{ top: "-181px", left: "51%" }}
       />
 
       <div className="relative mx-3 pt-10">
         <Balls />
-        <GameBlock numbers={numbers} />
+        <GameBlock numbers={currentNumbers} spinKey={spinKey} />
         <DiamondBlock />
         <div
-          className="relative z-20 flex justify-center"
+          className="relative z-20 flex flex-col items-center"
           style={{ marginTop: "-16.5%" }}
         >
           <div className="relative">
@@ -57,6 +227,8 @@ export default function HeroSection({ numbers, periode }: HeroSectionProps) {
               </p>
             </div>
           </div>
+
+          <CountdownDisplay remaining={remaining} isActive={isActive} />
         </div>
       </div>
     </div>

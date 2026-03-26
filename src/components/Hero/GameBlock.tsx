@@ -1,22 +1,24 @@
 "use client";
 
+import { useEffect } from "react";
 import Image from "next/image";
 import { motion } from "motion/react";
+import { useAudioManager } from "@/components/AudioManager";
 
 const CYCLES = 3;
-const STRIP_LENGTH = 10 * CYCLES; // 30 items before target
+const STRIP_LENGTH = 10 * CYCLES;
 
-function SlotDigit({ digit, index }: { digit: string; index: number }) {
-  // Target di index 0 (atas), spinning digits di bawah
-  // Strip bergerak dari y negatif → 0 = turun ke bawah = angka masuk dari atas
+const INIT_DELAY = 2; // detik delay saat pertama load agar audio siap
+
+function SlotDigit({ digit, index, startDelay }: { digit: string; index: number; startDelay: number }) {
   const strip = [
     digit,
     ...Array.from({ length: STRIP_LENGTH }, (_, i) => String(i % 10)),
   ];
 
-  const startPct = -(STRIP_LENGTH / strip.length) * 100; // ≈ -96.77%
+  const startPct = -(STRIP_LENGTH / strip.length) * 100;
   const startY  = `${startPct}%`;
-  const midY    = `${startPct * 0.1}%`; // 90% jarak sudah ditempuh, sisa 10% untuk snap
+  const midY    = `${startPct * 0.1}%`;
   const finalY  = "0%";
 
   return (
@@ -27,12 +29,12 @@ function SlotDigit({ digit, index }: { digit: string; index: number }) {
       <motion.div
         initial={{ y: startY, filter: "blur(2px)" }}
         animate={{
-          y:      [startY,       midY,          finalY],
-          filter: ["blur(2px)", "blur(2px)",   "blur(0px)"],
+          y:      [startY,       midY,       finalY],
+          filter: ["blur(2px)", "blur(2px)", "blur(0px)"],
         }}
         transition={{
-          delay: 0,
-          duration: 1.4 + index * 0.3,
+          delay: startDelay,
+          duration: 2.2 + index * 0.5,
           times: [0, 0.88, 1],
           ease: ["linear", [0.1, 0, 0.2, 1]],
         }}
@@ -53,7 +55,33 @@ function SlotDigit({ digit, index }: { digit: string; index: number }) {
   );
 }
 
-export default function GameBlock({ numbers }: { numbers: string }) {
+export default function GameBlock({ numbers, spinKey = 0 }: { numbers: string; spinKey?: number }) {
+  const { playRoller, playLanding } = useAudioManager();
+
+  const isInitialLoad = spinKey === 0;
+  const audioDelay = isInitialLoad ? INIT_DELAY * 1000 : 0;
+
+  useEffect(() => {
+    const duration = 2.2 + (numbers.length - 1) * 0.5 + 0.3;
+
+    const rollerTimer = setTimeout(() => {
+      playRoller(duration);
+    }, audioDelay);
+
+    const landingTimers = numbers.split("").map((_, i) => {
+      return setTimeout(() => {
+        playLanding(0);
+      }, audioDelay + (2.2 + i * 0.5) * 1000);
+    });
+
+    return () => {
+      clearTimeout(rollerTimer);
+      landingTimers.forEach(clearTimeout);
+    };
+  }, [spinKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const startDelay = isInitialLoad ? INIT_DELAY : 0;
+
   return (
     <div className="absolute w-full flex flex-col justify-center top-35 z-30">
       {/* game text */}
@@ -77,8 +105,7 @@ export default function GameBlock({ numbers }: { numbers: string }) {
         <div
           className="absolute w-full max-w-64 h-28 -top-8 z-0"
           style={{
-            background:
-              "radial-gradient(ellipse at center, rgba(0,0,0,0.9) 0%, transparent 70%)",
+            background: "radial-gradient(ellipse at center, rgba(0,0,0,0.9) 0%, transparent 70%)",
             filter: "blur(4px)",
           }}
         />
@@ -96,9 +123,10 @@ export default function GameBlock({ numbers }: { numbers: string }) {
         <div className="absolute flex w-full h-full items-center justify-evenly px-[7%] -top-2.5">
           {numbers.split("").map((digit, i) => (
             <SlotDigit
-              key={`${numbers}-${i}`}
+              key={`${spinKey}-${numbers}-${i}`}
               digit={digit}
               index={i}
+              startDelay={startDelay}
             />
           ))}
         </div>

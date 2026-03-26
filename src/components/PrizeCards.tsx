@@ -45,7 +45,7 @@ export default function PrizeCards({ prizes }: PrizeCardsProps) {
               <div className="w-full rounded-3xl pt-4 pb-2 px-5 text-center prize-card">
                 <div className="text-white text-[12px] opacity-80">Hadiah :</div>
                 <div
-                  className="font-extrabold text-xl italic"
+                  className="font-extrabold text-lg italic"
                   style={{ color: "#FFA100", textShadow: "0 1px 3px rgba(0,0,0,0.4)" }}
                 >
                   {item.prize}

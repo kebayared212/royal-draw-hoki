@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Urbanist } from "next/font/google";
+import { AudioManager } from "@/components/AudioManager";
 import "./globals.css";
 
 const urbanist = Urbanist({
@@ -23,7 +24,9 @@ export default function RootLayout({
       lang="en"
       className={`${urbanist.className} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col w-full max-w-md mx-auto overflow-x-hidden">{children}</body>
+      <body className="min-h-full flex flex-col w-full max-w-md mx-auto overflow-x-hidden">
+        <AudioManager>{children}</AudioManager>
+      </body>
     </html>
   );
 }

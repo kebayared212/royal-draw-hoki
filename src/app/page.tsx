@@ -12,23 +12,41 @@ export default async function Home() {
     fetchPrizes(),
   ]);
 
-  const numbers = periode?.result ?? "00000000";
+  // Jika result_time belum tercapai, skip periode yang sedang berjalan dari history
+  // supaya yang ditampilkan adalah result periode sebelumnya.
+  const resultTimeReached = periode?.resultTimeReached ?? true;
+  const displayHistory = resultTimeReached
+    ? history
+    : history.filter((h) => String(h.periode) !== periode?.periodeNumber);
+  const numbers = displayHistory[0]?.nomor ?? "00000000";
+
   const periodeDisplay = periode?.periodeDisplay ?? "-";
   const periodeId = periode?.periodeId ?? "";
-  const periodeNumber = Number(periode?.periodeNumber ?? 0);
+  const periodeNumber = periode?.periodeNumber ?? "";
   const keluaran = periode?.keluaranDisplay ?? "-";
   const tutup = periode?.tutupDisplay ?? "-";
+  const countdownTargetMs = periode?.countdownTargetMs ?? 0;
+  const periodeEndMs = periode?.periodeEndMs ?? 0;
 
   return (
     <div className="relative min-h-screen font-sans text-white w-full overflow-hidden">
-      <HeroSection numbers={numbers} periode={periodeDisplay} />
+      <HeroSection
+        numbers={numbers}
+        periode={periodeDisplay}
+        countdownTargetMs={countdownTargetMs}
+        periodeNumber={periodeNumber}
+        isActive={periode?.isActive ?? false}
+      />
       <PrizeCards prizes={prizes} />
       <SyaratKetentuan />
       <SubmitForm
         periodeId={periodeId}
-        periodeNumber={periodeNumber}
+        periodeNumber={Number(periodeNumber)}
         keluaran={keluaran}
         tutup={tutup}
+        periodeEndMs={periodeEndMs}
+        isActive={periode?.isActive ?? false}
+        periodeStartDisplay={periode?.periodeStartDisplay ?? "-"}
       />
       <HistoryTable data={history} />
       {/* Bottom ambient glow */}
