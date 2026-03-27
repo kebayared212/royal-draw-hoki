@@ -57,7 +57,7 @@ export default function HistoryDialog({ periodeNumber, keluaran, tutup }: Histor
       const res = await fetch("/api/game/history", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ game: "royaldraw" }),
+        body: JSON.stringify({ game: "royal-draw" }),
       });
       const json = await res.json();
       interface RawHistoryItem {

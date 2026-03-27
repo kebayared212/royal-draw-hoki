@@ -36,6 +36,7 @@ export default async function Home() {
         periodeNumber={periodeNumber}
         resultPeriodeNumber={resultPeriodeNumber}
         isActive={isActive}
+        prizes={prizes}
       />
       <PrizeCards prizes={prizes} />
       <SyaratKetentuan />

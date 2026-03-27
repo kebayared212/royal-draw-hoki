@@ -47,6 +47,7 @@ interface RawResultItem {
 interface RawPrizeItem {
   draw: string;
   prize: number;
+  perkalian?: number;
 }
 
 export interface CurrentPeriode {
@@ -163,14 +164,17 @@ export async function fetchPrizes(): Promise<PrizeItem[]> {
     const res = await fetch(`${BACKEND}/api/game/prize`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ brand: 'dewabet', games: 'royaldraw' }),
+      body: JSON.stringify({ brand: 'dewabet', games: 'royal-draw' }),
       cache: 'no-store',
     });
     const json = await res.json() as { data_detail?: RawPrizeItem[] };
-    return (json.data_detail ?? []).map((item) => ({
-      type: item.draw,
-      prize: formatPrize(item.prize),
-    }));
+    return (json.data_detail ?? []).map((item) => {
+      const finalPrize = item.perkalian ? item.prize * item.perkalian : item.prize;
+      return {
+        type: item.draw,
+        prize: formatPrize(finalPrize),
+      };
+    });
   } catch {
     return [];
   }

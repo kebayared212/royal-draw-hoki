@@ -1,19 +1,33 @@
 "use client";
 
-import { useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { Trophy, Frown, Dices } from "lucide-react";
 
 interface Props {
   show: boolean;
   status: "win" | "lose" | "no_bet";
   bet: string;
   result: string;
+  prize: string;
   onClose: () => void;
 }
 
 const CONFETTI_COLORS = ["#FAB861", "#F79009", "#fde047", "#fb923c", "#fff", "#fbbf24", "#ef4444"];
 
-export default function ResultNotification({ show, status, bet, result, onClose }: Props) {
+// Pre-generated at module load (outside React render) — no purity issues
+const PARTICLES = Array.from({ length: 28 }, (_, i) => ({
+  id: i,
+  x: Math.random() * 100,
+  delay: Math.random() * 1.4,
+  duration: 2 + Math.random() * 1.5,
+  size: 5 + Math.random() * 7,
+  color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+  rotate: Math.random() * 360,
+  drift: (Math.random() - 0.5) * 80,
+  shape: Math.random() > 0.5 ? "50%" : "2px",
+}));
+
+export default function ResultNotification({ show, status, bet, result, prize, onClose }: Props) {
   const isWin = status === "win";
   const isNoBet = status === "no_bet";
 
@@ -21,20 +35,8 @@ export default function ResultNotification({ show, status, bet, result, onClose 
   const prefix = isNoBet ? result : result.slice(0, matchStart);
   const matched = isNoBet ? "" : result.slice(matchStart);
 
-  // Generate confetti sekali per show event
-  const particles = useMemo(() =>
-    Array.from({ length: 28 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      delay: Math.random() * 1.4,
-      duration: 2 + Math.random() * 1.5,
-      size: 5 + Math.random() * 7,
-      color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
-      rotate: Math.random() * 360,
-      drift: (Math.random() - 0.5) * 80,
-      shape: Math.random() > 0.5 ? "50%" : "2px",
-    })),
-  [show]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Particles are deterministic (no Math.random in render) — generated at module level
+  const particles = PARTICLES;
 
   return (
     <AnimatePresence>
@@ -110,9 +112,9 @@ export default function ResultNotification({ show, status, bet, result, onClose 
               />
             )}
 
-            {/* Emoji */}
+            {/* Icon */}
             <motion.div
-              className="text-5xl mb-3 relative z-10"
+              className="mb-3 relative z-10"
               initial={{ scale: 0, rotate: -20 }}
               animate={isWin
                 ? { scale: [0, 1.35, 0.88, 1.12, 1], rotate: [0, 12, -6, 6, 0] }
@@ -120,7 +122,13 @@ export default function ResultNotification({ show, status, bet, result, onClose 
               }
               transition={{ delay: 0.25, duration: 0.75, times: isWin ? [0, 0.4, 0.6, 0.8, 1] : [0, 0.5, 0.75, 1] }}
             >
-              {isWin ? "🏆" : isNoBet ? "🎲" : "😔"}
+              {isWin ? (
+                <Trophy size={52} strokeWidth={2.2} style={{ color: "#FAB861", filter: "drop-shadow(0 0 12px rgba(250,184,97,0.7))" }} />
+              ) : isNoBet ? (
+                <Dices size={52} strokeWidth={2} style={{ color: "#a5b4fc", filter: "drop-shadow(0 0 10px rgba(165,180,252,0.5))" }} />
+              ) : (
+                <Frown size={52} strokeWidth={2} style={{ color: "#f87171", filter: "drop-shadow(0 0 10px rgba(248,113,113,0.5))" }} />
+              )}
             </motion.div>
 
             {/* Title */}
@@ -138,7 +146,7 @@ export default function ResultNotification({ show, status, bet, result, onClose 
                     : "0 0 16px rgba(248,113,113,0.5)",
               }}
             >
-              {isWin ? "Selamat! 🎉" : isNoBet ? "Hasil Sudah Keluar" : "Sayang Sekali..."}
+              {isWin ? "Selamat!" : isNoBet ? "Hasil Sudah Keluar" : "Sayang Sekali..."}
             </motion.p>
 
             {/* Subtitle */}
@@ -149,7 +157,7 @@ export default function ResultNotification({ show, status, bet, result, onClose 
               transition={{ delay: 0.48, duration: 0.4 }}
             >
               {isWin
-                ? "Tebakan kamu tepat! Hubungi CS untuk klaim hadiah."
+                ? "Tebakan kamu tepat! Hadiah mu akan dikirim segera."
                 : isNoBet
                   ? "Kamu tidak memasang tebakan periode ini. Jangan lewatkan periode berikutnya!"
                   : "Tebakan kamu belum beruntung kali ini. Semangat!"}
@@ -203,13 +211,35 @@ export default function ResultNotification({ show, status, bet, result, onClose 
               </motion.div>
             )}
 
+            {/* Hadiah — hanya saat menang */}
+            {isWin && prize && (
+              <motion.div
+                className="w-full rounded-2xl px-4 py-3 mb-5 relative z-10"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.72, duration: 0.4 }}
+                style={{
+                  background: "linear-gradient(135deg, rgba(250,184,97,0.15) 0%, rgba(247,144,9,0.08) 100%)",
+                  border: "1px solid rgba(250,184,97,0.3)",
+                }}
+              >
+                <p className="text-white/40 text-[10px] uppercase tracking-widest mb-1">Hadiah</p>
+                <p
+                  className="font-black text-2xl tracking-wide"
+                  style={{ color: "#FAB861", textShadow: "0 0 16px rgba(250,184,97,0.6)" }}
+                >
+                  {prize}
+                </p>
+              </motion.div>
+            )}
+
             {/* Button */}
             <motion.button
               onClick={onClose}
               className="w-full py-3 rounded-2xl font-extrabold text-white text-base tracking-wide relative z-10"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: isNoBet ? 0.64 : 0.72, duration: 0.4 }}
+              transition={{ delay: isWin && prize ? 0.82 : isNoBet ? 0.64 : 0.72, duration: 0.4 }}
               whileTap={{ scale: 0.95 }}
               whileHover={{ opacity: 0.9 }}
               style={{

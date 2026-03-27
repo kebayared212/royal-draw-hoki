@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Balls from "./Balls";
@@ -10,6 +11,11 @@ const DevPreview = dynamic(() => import("./DevPreview"), { ssr: false });
 
 const GameBlock = dynamic(() => import("./GameBlock"), { ssr: false });
 
+interface PrizeInfo {
+  type: string;
+  prize: string;
+}
+
 interface HeroSectionProps {
   numbers: string;
   periode: string;
@@ -18,6 +24,7 @@ interface HeroSectionProps {
   periodeNumber: string;
   resultPeriodeNumber: string;
   isActive: boolean;
+  prizes: PrizeInfo[];
 }
 
 
@@ -173,45 +180,64 @@ interface NotifState {
   status: "win" | "lose" | "no_bet";
   bet: string;
   result: string;
+  prize: string;
 }
 
-export default function HeroSection({ numbers, periode, countdownTargetMs, periodeEndMs, periodeNumber, resultPeriodeNumber, isActive }: HeroSectionProps) {
+export default function HeroSection({ numbers, periode, countdownTargetMs, periodeEndMs, periodeNumber, resultPeriodeNumber, isActive, prizes }: HeroSectionProps) {
+  const router = useRouter();
   const [spinKey, setSpinKey] = useState(0);
   const [remaining, setRemaining] = useState(0);
   const [phase, setPhase] = useState("upcoming");
   const [currentNumbers, setCurrentNumbers] = useState(numbers);
-  const [notif, setNotif] = useState<NotifState>({ show: false, status: "no_bet", bet: "", result: "" });
+  const [notif, setNotif] = useState<NotifState>({ show: false, status: "no_bet", bet: "", result: "", prize: "" });
   const pendingNomorRef = useRef<string | null>(null);
 
-  const showNotifAfterAnimation = (nomor: string) => {
-    // Delay = durasi animasi digit terakhir + buffer
-    const animMs = (2.2 + (nomor.length - 1) * 0.5 + 0.8) * 1000;
+  const NOTIF_KEY = `notif-shown-${periodeNumber}`;
 
-    setTimeout(async () => {
-      try {
-        const res = await fetch("/api/game/player", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: "shaggy", brand: "dewabet" }),
-        });
-        const data = await res.json() as {
-          history?: { tier: string; bet: string; status: string; periode: string; game: string }[];
-        };
+  const fetchAndShowNotif = async (nomor: string, targetPeriode: string) => {
+    if (localStorage.getItem(NOTIF_KEY) === targetPeriode) return;
+    try {
+      const res = await fetch("/api/game/player", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: "shaggy", brand: "dewabet" }),
+      });
+      const data = await res.json() as {
+        history?: { tier: string; bet: string; status: string; periode: string; game: string }[];
+      };
 
-        const entry = (data.history ?? []).find(
-          (h) => h.periode === String(periodeNumber) && h.game === "royal-draw"
-        );
+      const entry = (data.history ?? []).find(
+        (h) => h.periode === targetPeriode && h.game === "royal-draw"
+      );
 
-        if (!entry) {
-          setNotif({ show: true, status: "no_bet", bet: "", result: nomor });
-          return;
-        }
-
+      if (!entry) {
+        setNotif({ show: true, status: "no_bet", bet: "", result: nomor, prize: "" });
+      } else {
         const status = nomor.endsWith(entry.bet) ? "win" : "lose";
-        setNotif({ show: true, status, bet: entry.bet, result: nomor });
-      } catch { /* jika gagal fetch, tidak tampilkan notif */ }
-    }, animMs);
+        const prizeType = `${entry.bet.length}D`;
+        const prizeStr = status === "win" ? (prizes.find((p) => p.type === prizeType)?.prize ?? "") : "";
+        setNotif({ show: true, status, bet: entry.bet, result: nomor, prize: prizeStr });
+      }
+      localStorage.setItem(NOTIF_KEY, targetPeriode);
+    } catch { /* jika gagal fetch, tidak tampilkan notif */ }
   };
+
+  const showNotifAfterAnimation = (nomor: string) => {
+    const animMs = (2.2 + (nomor.length - 1) * 0.5 + 0.8) * 1000;
+    setTimeout(() => fetchAndShowNotif(nomor, String(periodeNumber)), animMs);
+  };
+
+  // Cek notifikasi saat halaman dibuka & result sudah keluar
+  useEffect(() => {
+    if (!isActive || !periodeEndMs) return;
+    const now = Date.now();
+    const resultAlreadyOut = now >= periodeEndMs && now >= countdownTargetMs;
+    if (!resultAlreadyOut) return;
+    // Result sudah keluar — cek apakah numbers bukan placeholder
+    if (!numbers || numbers === "00000000") return;
+    const t = setTimeout(() => fetchAndShowNotif(numbers, String(periodeNumber)), 500);
+    return () => clearTimeout(t);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!countdownTargetMs) return;
@@ -226,6 +252,13 @@ export default function HeroSection({ numbers, periode, countdownTargetMs, perio
 
       setPhase(isTutup ? "tutup" : isHasil ? "hasil" : "upcoming");
       setRemaining(left);
+
+      // Upcoming selesai → refresh untuk dapat data active dari server
+      if (!isActive && left === 0) {
+        clearInterval(id);
+        router.refresh();
+        return;
+      }
 
       // Trigger animasi hanya saat result_time tercapai
       if (isHasil && left === 0) {
@@ -261,9 +294,9 @@ export default function HeroSection({ numbers, periode, countdownTargetMs, perio
       />
 
       <DevPreview
-        onWin={() => setNotif({ show: true, status: "win", bet: "1234", result: "56781234" })}
-        onLose={() => setNotif({ show: true, status: "lose", bet: "9999", result: "56781234" })}
-        onNoBet={() => setNotif({ show: true, status: "no_bet", bet: "", result: "56781234" })}
+        onWin={() => setNotif({ show: true, status: "win", bet: "1234", result: "56781234", prize: prizes.find((p) => p.type === "4D")?.prize ?? "10 Juta" })}
+        onLose={() => setNotif({ show: true, status: "lose", bet: "9999", result: "56781234", prize: "" })}
+        onNoBet={() => setNotif({ show: true, status: "no_bet", bet: "", result: "56781234", prize: "" })}
       />
 
       {/* Radial rays */}

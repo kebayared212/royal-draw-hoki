@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { CircleCheckBig } from "lucide-react";
 import Disable from "./Icon/Disable";
 import HistoryDialog from "./HistoryDialog";
 import SubmitSuccess from "./SubmitSuccess";
@@ -28,6 +29,7 @@ export default function SubmitFormBody({ periodeId, periodeNumber, keluaran, tut
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [alreadyBet, setAlreadyBet] = useState<string | null>(null); // angka yang sudah ditebak
 
   useEffect(() => {
     fetch("/api/game/player", {
@@ -36,11 +38,15 @@ export default function SubmitFormBody({ periodeId, periodeNumber, keluaran, tut
       body: JSON.stringify({ username: "shaggy", brand: "dewabet" }),
     })
       .then((r) => r.json())
-      .then((data: { status?: boolean; data?: { username?: string } }) => {
+      .then((data: { status?: boolean; data?: { username?: string }; history?: { bet: string; periode: string; game: string }[] }) => {
         if (data.status && data.data?.username) setUserId(data.data.username);
+        const entry = (data.history ?? []).find(
+          (h) => h.periode === String(periodeNumber) && h.game === "royal-draw"
+        );
+        if (entry) setAlreadyBet(entry.bet);
       })
       .finally(() => setPlayerLoading(false));
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!periodeEndMs || !isActive) return;
@@ -80,7 +86,7 @@ export default function SubmitFormBody({ periodeId, periodeNumber, keluaran, tut
         setError(data.message ?? data.error ?? "Gagal submit, coba lagi.");
       } else {
         setSuccess(true);
-        setUserId("");
+        setAlreadyBet(tebakAngka.trim());
         setTebakAngka("");
       }
     } catch {
@@ -92,7 +98,26 @@ export default function SubmitFormBody({ periodeId, periodeNumber, keluaran, tut
 
   return (
     <>
-      {active ? (
+      {active && alreadyBet ? (
+        <div className="flex flex-col items-center gap-3 py-4">
+          <CircleCheckBig size={40} strokeWidth={2} style={{ color: "#4ade80", filter: "drop-shadow(0 0 8px rgba(74,222,128,0.4))" }} />
+          <p className="font-semibold text-sm text-white text-center">
+            Kamu sudah menebak untuk periode ini
+          </p>
+          <div
+            className="w-full rounded-lg px-4 py-3 text-center"
+            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
+          >
+            <p className="text-white/40 text-[10px] uppercase tracking-widest mb-1">Tebakan Kamu</p>
+            <p className="font-black text-2xl tracking-widest" style={{ color: "#FAB861" }}>
+              {alreadyBet}
+            </p>
+          </div>
+          <p className="text-white/40 text-xs text-center italic">
+            Tunggu hasil keluaran untuk mengetahui hasilnya
+          </p>
+        </div>
+      ) : active ? (
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block text-white font-semibold mb-2 text-sm">User ID :</label>
