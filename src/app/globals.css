@@ -74,6 +74,10 @@ input::placeholder {
   );
 }
 
+.prize-swiper .swiper-wrapper {
+  transition-timing-function: linear !important;
+}
+
 .prize-card {
   position: relative;
   background: rgba(0, 0, 0, 0.1);

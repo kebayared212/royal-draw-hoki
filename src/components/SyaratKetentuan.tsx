@@ -34,15 +34,16 @@ export default function SyaratKetentuan() {
           className="mt-2 p-4 rounded-2xl text-gray-300 text-sm leading-6"
           style={{ background: "#2a1200", border: "1px solid #3d1a00" }}
         >
-          <ul className="list-disc list-inside space-y-2">
-            <li>Promo berlaku untuk semua member aktif.</li>
-            <li>Hadiah akan dikreditkan setelah verifikasi.</li>
-            <li>Satu User ID hanya dapat submit satu nomor per periode.</li>
-            <li>Nomor yang sudah di-submit tidak dapat diubah.</li>
-            <li>
-              Keputusan manajemen bersifat final dan tidak dapat diganggu gugat.
-            </li>
-          </ul>
+          <ol className="list-decimal list-inside space-y-2">
+            <li><strong>Minimal Deposit &amp; Turnover:</strong> Kamu wajib deposit minimal Rp 100.000 dan memiliki 2X turnover (total taruhan).</li>
+            <li><strong>Siapa yang Bisa Ikut:</strong> Semua pemain LOREM berhak mengikuti promo tebak angka ini.</li>
+            <li><strong>Waktu Pengumuman:</strong> Angka yang keluar akan diumumkan setiap hari.</li>
+            <li><strong>Cek Hasil:</strong> Hasil keluaran angka bisa dilihat di link yang tersedia saat kamu melakukan tebakan.</li>
+            <li><strong>Konfirmasi Tebakan:</strong> Jika tebakan berhasil, akan muncul keterangan di menu record atau form.</li>
+            <li><strong>Batasan Bonus:</strong> Bonus ini hanya berlaku untuk pemain baru dan hanya diberikan 1 kali kesempatan.</li>
+            <li><strong>Nominal Hadiah:</strong> Jumlah hadiah tidak tetap, bisa berubah sewaktu-waktu (bisa lebih kecil atau lebih besar).</li>
+            <li><strong>Catatan Penting:</strong> Pemain yang menang dalam promo ini haruslah mereka yang sudah pernah melakukan deposit sebelumnya di Lorem.</li>
+          </ol>
         </div>
       )}
     </div>

@@ -14,12 +14,14 @@ export default function PrizeCardsSwiper({ prizes }: { prizes: Prize[] }) {
     <div className="px-4 py-5">
       <Swiper
         modules={[FreeMode, Autoplay]}
-        freeMode
+        freeMode={{ enabled: true, momentum: false }}
         loop
-        autoplay={{ delay: 0, disableOnInteraction: false }}
+        autoplay={{ delay: 0, disableOnInteraction: false, pauseOnMouseEnter: true }}
         speed={3000}
-        slidesPerView={3}
+        slidesPerView={2.5}
         spaceBetween={12}
+        allowTouchMove={false}
+        className="prize-swiper"
       >
         {prizes.map((item) => (
           <SwiperSlide key={item.type} style={{ marginTop: "12px" }}>
