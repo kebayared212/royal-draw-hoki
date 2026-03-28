@@ -1,0 +1,172 @@
+/* ==========================================
+   KDTOTO — Scoped styles (kd- prefix)
+   ========================================== */
+
+/* Bridge next/font CSS vars to font-family on kdtoto elements */
+[data-theme="kdtoto"] .font-jomhuria {
+  font-family: var(--kd-jomhuria) !important;
+}
+
+[data-theme="kdtoto"] .font-montserrat {
+  font-family: var(--kd-montserrat) !important;
+}
+
+[data-theme="kdtoto"] {
+  font-family: var(--kd-montserrat);
+}
+
+/* Background image overlay */
+.kd-bg-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("/images/kdtoto/background.webp");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: -2;
+}
+
+.kd-bg-overlay::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 5, 0, 0.7) 0%,
+    rgba(10, 5, 0, 0.5) 30%,
+    rgba(10, 5, 0, 0.6) 70%,
+    rgba(10, 5, 0, 0.9) 100%
+  );
+  z-index: -1;
+}
+
+/* ==========================================
+   SLOT MACHINE — IMAGE FRAME
+   ========================================== */
+
+.kd-image-frame {
+  position: relative;
+  margin: 0 auto;
+}
+
+.kd-slot-cells {
+  position: absolute;
+  top: 28%;
+  bottom: 35%;
+  left: 5%;
+  right: 5%;
+  display: flex;
+  gap: 1.4%;
+  z-index: 10;
+  overflow: hidden;
+  border-radius: 8px;
+  clip-path: inset(0 0 0 0 round 8px);
+}
+
+.kd-slot-cell {
+  flex: 1;
+  height: 100%;
+  background: transparent;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.kd-slot-column-viewport {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  border-radius: 6px;
+  transition: box-shadow 0.3s ease;
+}
+
+.kd-periode {
+  position: absolute;
+  bottom: 24%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: clamp(0.7rem, 2vw, 1.1rem);
+  color: #fdffff;
+  z-index: 5;
+  white-space: nowrap;
+}
+
+/* ==========================================
+   PRIZE GRID — SWIPER
+   ========================================== */
+
+.kd-prize-swiper {
+  padding-top: 16px;
+  overflow: visible;
+}
+
+.kd-prize-swiper .swiper {
+  overflow: visible;
+}
+
+.kd-prize-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 8px 20px;
+  border-radius: 12px;
+  background: linear-gradient(
+    180deg,
+    rgba(80, 20, 10, 1) 0%,
+    rgba(80, 20, 10, 0.6) 60%,
+    rgba(80, 20, 10, 0) 100%
+  );
+  border: 2.5px solid rgb(103, 26, 13);
+  border-bottom: none;
+  position: relative;
+}
+
+.kd-prize-category {
+  position: absolute;
+  top: -28px;
+}
+
+.kd-prize-amount {
+  font-size: 2rem;
+  font-style: italic;
+  line-height: 1;
+  background: linear-gradient(180deg, #fff70c, #f9e547);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  width: 100%;
+  text-align: center;
+}
+
+/* ==========================================
+   KDTOTO TABLE
+   ========================================== */
+
+.kd-table th {
+  text-align: center;
+  color: #ffa7a7;
+  font-weight: 400;
+}
+
+/* ==========================================
+   RESPONSIVE
+   ========================================== */
+
+@media (max-width: 640px) {
+  .kd-slot-cell {
+    border-radius: 5px;
+  }
+}
+
+@media (max-width: 400px) {
+  .kd-slot-cell {
+    border-radius: 4px;
+  }
+}

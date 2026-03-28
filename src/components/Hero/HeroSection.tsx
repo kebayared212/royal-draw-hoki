@@ -286,6 +286,12 @@ export default function HeroSection({ numbers, periode, countdownTargetMs, perio
     return () => { clearTimeout(initId); clearInterval(id); };
   }, [countdownTargetMs, periodeEndMs, periodeNumber, isActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Polling: re-fetch data periode setiap 2 menit (admin bisa ubah jam sewaktu-waktu)
+  useEffect(() => {
+    const id = setInterval(() => router.refresh(), 2 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [router]);
+
   return (
     <div className="relative">
       <ResultNotification
@@ -320,7 +326,7 @@ export default function HeroSection({ numbers, periode, countdownTargetMs, perio
         <DiamondBlock />
         <div
           className="relative z-20 flex flex-col items-center"
-          style={{ marginTop: "-16.5%" }}
+          style={{ marginTop: "clamp(-60px, -16.5%, -40px)" }}
         >
           <div className="relative">
             <Image

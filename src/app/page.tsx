@@ -1,64 +1,36 @@
-import HeroSection from "@/components/Hero/HeroSection";
-import PrizeCards from "@/components/PrizeCards";
-import SyaratKetentuan from "@/components/SyaratKetentuan";
-import SubmitForm from "@/components/SubmitForm";
-import HistoryTable from "@/components/HistoryTable";
-import { fetchCurrentPeriode, fetchResults, fetchPrizes } from "@/lib/server-api";
+import Link from "next/link";
 
-export default async function Home() {
-  const [periode, history, prizes] = await Promise.all([
-    fetchCurrentPeriode(),
-    fetchResults(10),
-    fetchPrizes(),
-  ]);
-
-  // history sudah bersih dari server — hanya berisi result yang result_time-nya sudah lewat
-  const numbers = history[0]?.nomor ?? "00000000";
-  const resultPeriodeNumber = String(history[0]?.periode ?? "");
-
-  const periodeDisplay = periode?.periodeDisplay ?? "-";
-  const periodeId = periode?.periodeId ?? "";
-  const periodeNumber = periode?.periodeNumber ?? "";
-  const keluaran = periode?.keluaranDisplay ?? "-";
-  const tutup = periode?.tutupDisplay ?? "-";
-  const countdownTargetMs = periode?.countdownTargetMs ?? 0;
-  const periodeEndMs = periode?.periodeEndMs ?? 0;
-  const isActive = periode?.isActive ?? false;
-  const periodeStartDisplay = periode?.periodeStartDisplay ?? "-";
-
+export default function Home() {
   return (
-    <div className="relative min-h-screen font-sans text-white w-full overflow-hidden">
-      <HeroSection
-        numbers={numbers}
-        periode={periodeDisplay}
-        countdownTargetMs={countdownTargetMs}
-        periodeEndMs={periodeEndMs}
-        periodeNumber={periodeNumber}
-        resultPeriodeNumber={resultPeriodeNumber}
-        isActive={isActive}
-        prizes={prizes}
-      />
-      <PrizeCards prizes={prizes} />
-      <SyaratKetentuan />
-      <SubmitForm
-        periodeId={periodeId}
-        periodeNumber={Number(periodeNumber)}
-        keluaran={keluaran}
-        tutup={tutup}
-        periodeEndMs={periodeEndMs}
-        isActive={isActive}
-        periodeStartDisplay={periodeStartDisplay}
-      />
-      <HistoryTable data={history} />
-      {/* Bottom ambient glow */}
-      <div
-        className="circle-bg pointer-events-none -z-10"
-        style={{ top: "1253px", left: "593px" }}
-      />
-      <div
-        className="circle-bg pointer-events-none -z-10"
-        style={{ top: "1153px", left: "-53px" }}
-      />
+    <div className="min-h-screen flex flex-col items-center justify-center gap-8 px-4">
+      <h1 className="text-3xl font-bold text-center">Pilih Template</h1>
+      <p className="text-white/50 text-sm text-center">Pilih template yang ingin dilihat</p>
+
+      <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg">
+        <Link
+          href="/royal-draw"
+          className="flex-1 rounded-2xl p-6 text-center transition-all hover:scale-105"
+          style={{
+            background: "linear-gradient(135deg, #1C1101, #372101)",
+            border: "2px solid #FAB861",
+          }}
+        >
+          <p className="text-2xl font-bold mb-2" style={{ color: "#FAB861" }}>Royal Draw</p>
+          <p className="text-white/60 text-sm">Template Royal Draw Hoki</p>
+        </Link>
+
+        <Link
+          href="/kdtoto"
+          className="flex-1 rounded-2xl p-6 text-center transition-all hover:scale-105"
+          style={{
+            background: "linear-gradient(135deg, #3a0a00, #7f1f00)",
+            border: "2px solid #f1c40f",
+          }}
+        >
+          <p className="text-2xl font-bold mb-2" style={{ color: "#f1c40f" }}>KD TOTO</p>
+          <p className="text-white/60 text-sm">Template KD TOTO 8 Angka Hoki</p>
+        </Link>
+      </div>
     </div>
   );
 }

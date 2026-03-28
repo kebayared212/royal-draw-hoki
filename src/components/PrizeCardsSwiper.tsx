@@ -1,7 +1,9 @@
 "use client";
 
+import { useRef } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { FreeMode, Autoplay } from "swiper/modules";
+import type { SwiperRef } from "swiper/react";
 import "swiper/css";
 
 interface Prize {
@@ -10,17 +12,19 @@ interface Prize {
 }
 
 export default function PrizeCardsSwiper({ prizes }: { prizes: Prize[] }) {
+  const swiperRef = useRef<SwiperRef>(null);
+
   return (
-    <div className="px-4 py-5">
+    <div className="px-4 py-5" >
       <Swiper
+        ref={swiperRef}
         modules={[FreeMode, Autoplay]}
         freeMode={{ enabled: true, momentum: false }}
         loop
-        autoplay={{ delay: 0, disableOnInteraction: false, pauseOnMouseEnter: true }}
+        autoplay={{ delay: 0 }}
         speed={3000}
         slidesPerView={2.5}
         spaceBetween={12}
-        allowTouchMove={false}
         className="prize-swiper"
       >
         {prizes.map((item) => (

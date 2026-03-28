@@ -10,13 +10,13 @@ import {
 } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 
-const MUSIC_URL = "/audio/slot-sound.mp3";
-const REVEAL_URL = "/audio/reveal.mp3";
-const BG_URL     = "https://media-splash.com/assets/sound/wild-west.mp3";
+const ROLLER_URL = "/audio/spin_reels.WAV";
+const LANDING_URLS = Array.from({ length: 8 }, (_, i) => `/audio/${i + 1}.wav`);
+const BG_URL = "https://media-splash.com/assets/sound/wild-west.mp3";
 
 interface AudioManagerCtx {
   playRoller: (duration: number) => void;
-  playLanding: (delayMs: number) => void;
+  playLanding: (digitIndex: number) => void;
   startAudio: () => void;
   audioStarted: boolean;
 }
@@ -36,10 +36,10 @@ export function AudioManager({ children }: { children: React.ReactNode }) {
   const [muted, setMuted] = useState(false);
   const [started, setStarted] = useState(false);
 
-  const bgRef        = useRef<HTMLAudioElement | null>(null);
-  const webCtxRef    = useRef<AudioContext | null>(null);
+  const bgRef = useRef<HTMLAudioElement | null>(null);
+  const webCtxRef = useRef<AudioContext | null>(null);
   const rollerBufRef = useRef<AudioBuffer | null>(null);
-  const revealBufRef = useRef<AudioBuffer | null>(null);
+  const landingBufsRef = useRef<(AudioBuffer | null)[]>(new Array(8).fill(null));
   const rollerNodeRef = useRef<AudioBufferSourceNode | null>(null);
 
   // Background music
@@ -69,11 +69,15 @@ export function AudioManager({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    loadBuffer(MUSIC_URL).then((buf) => { rollerBufRef.current = buf; }).catch(() => {});
-    loadBuffer(REVEAL_URL).then((buf) => { revealBufRef.current = buf; }).catch(() => {});
+    // Load roller
+    loadBuffer(ROLLER_URL).then((buf) => { rollerBufRef.current = buf; }).catch(() => {});
+    // Load 8 landing sounds
+    LANDING_URLS.forEach((url, i) => {
+      loadBuffer(url).then((buf) => { landingBufsRef.current[i] = buf; }).catch(() => {});
+    });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Roller: loop slot-sound.mp3 selama durasi animasi
+  // Roller: loop spin_reels.WAV selama durasi animasi
   const playRoller = useCallback((duration: number) => {
     if (muted) return;
     const ctx = getCtx();
@@ -107,32 +111,30 @@ export function AudioManager({ children }: { children: React.ReactNode }) {
     }
   }, [muted]);
 
-  // Landing: play reveal.mp3 sekali per digit
-  const playLanding = useCallback((delayMs: number) => {
+  // Landing: play 1.wav - 8.wav sesuai urutan digit (1-based index)
+  const playLanding = useCallback((digitIndex: number) => {
     if (muted) return;
+    const ctx = getCtx();
+    const idx = Math.max(0, Math.min(digitIndex - 1, 7));
+    const buf = landingBufsRef.current[idx];
+    if (!buf) return;
 
-    setTimeout(() => {
-      const ctx = getCtx();
-      const buf = revealBufRef.current;
-      if (!buf) return;
+    const startLanding = () => {
+      const gain = ctx.createGain();
+      gain.gain.value = 0.85;
+      gain.connect(ctx.destination);
 
-      const startLanding = () => {
-        const gain = ctx.createGain();
-        gain.gain.value = 0.85;
-        gain.connect(ctx.destination);
+      const source = ctx.createBufferSource();
+      source.buffer = buf;
+      source.connect(gain);
+      source.start(ctx.currentTime);
+    };
 
-        const source = ctx.createBufferSource();
-        source.buffer = buf;
-        source.connect(gain);
-        source.start(ctx.currentTime);
-      };
-
-      if (ctx.state === "suspended") {
-        ctx.resume().then(startLanding).catch(() => {});
-      } else {
-        startLanding();
-      }
-    }, delayMs);
+    if (ctx.state === "suspended") {
+      ctx.resume().then(startLanding).catch(() => {});
+    } else {
+      startLanding();
+    }
   }, [muted]);
 
   const startAudio = useCallback(() => {
