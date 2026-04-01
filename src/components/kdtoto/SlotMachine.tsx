@@ -17,13 +17,18 @@ interface Props {
   resultPeriodeNumber: string;
 }
 
-async function fetchResultWithRetry(periodeNumber: string, retries = 5): Promise<string | null> {
+async function fetchResultWithRetry(
+  periodeNumber: string,
+  retries = 5,
+): Promise<string | null> {
   for (let i = 0; i < retries; i++) {
     try {
       const res = await fetch(`/api/game/result?periode=${periodeNumber}`);
       const data = await res.json();
       if (data.nomor) return data.nomor;
-    } catch { /* retry */ }
+    } catch {
+      /* retry */
+    }
     if (i < retries - 1) await new Promise((r) => setTimeout(r, 3000));
   }
   return null;
@@ -149,7 +154,8 @@ export default function SlotMachine({
               ))}
           </div>
           <div className="kd-periode">
-            Periode: <span className="text-[#fff70c] font-semibold">{periode}</span>
+            Periode:{" "}
+            <span className="text-[#fff70c] font-semibold">{periode}</span>
           </div>
         </div>
       </div>
@@ -157,25 +163,28 @@ export default function SlotMachine({
       {/* Countdown */}
       {isActive && countdown && (
         <p className="text-white/60 font-montserrat text-sm">
-          Tutup dalam: <span className="text-[#fff70c] font-semibold">{countdown}</span>
+          Tutup dalam:{" "}
+          <span className="text-[#fff70c] font-semibold">{countdown}</span>
         </p>
       )}
 
       {/* Spin Button */}
-      <button
-        onClick={handleSpin}
-        disabled={spinning}
-        className="px-10 py-3 rounded-full font-montserrat font-bold text-white text-lg uppercase tracking-wider transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-        style={{
-          background: spinning
-            ? "linear-gradient(180deg, #7a2018, #5a1510)"
-            : "linear-gradient(180deg, #e74c3c, #c0392b)",
-          boxShadow: spinning ? "none" : "0 4px 20px rgba(231, 76, 60, 0.5)",
-          border: "2px solid rgba(241, 196, 15, 0.3)",
-        }}
-      >
-        {spinning ? "Spinning..." : "SPIN"}
-      </button>
+      {process.env.NODE_ENV === "development" && (
+        <button
+          onClick={handleSpin}
+          disabled={spinning}
+          className="px-10 py-3 rounded-full font-montserrat font-bold text-white text-lg uppercase tracking-wider transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          style={{
+            background: spinning
+              ? "linear-gradient(180deg, #7a2018, #5a1510)"
+              : "linear-gradient(180deg, #e74c3c, #c0392b)",
+            boxShadow: spinning ? "none" : "0 4px 20px rgba(231, 76, 60, 0.5)",
+            border: "2px solid rgba(241, 196, 15, 0.3)",
+          }}
+        >
+          {spinning ? "Spinning..." : "SPIN"}
+        </button>
+      )}
     </div>
   );
 }

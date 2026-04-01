@@ -107,8 +107,56 @@
   overflow: visible;
 }
 
-.kd-prize-swiper .swiper {
-  overflow: visible;
+/* ---- Marquee (mobile) ---- */
+
+/*
+ * Visible items per viewport — adjust these values:
+ *   --items : number of cards visible at once
+ *   --gap   : space between cards
+ */
+.kd-marquee-wrapper {
+  --items: 3;
+  --gap: 12px;
+  overflow: clip;
+  overflow-clip-margin: 32px content-box;
+  padding-top: 32px;
+  container-type: inline-size;
+}
+
+@media (min-width: 480px) {
+  .kd-marquee-wrapper {
+    --items: 4;
+    --gap: 14px;
+  }
+}
+
+@media (min-width: 640px) {
+  .kd-marquee-wrapper {
+    --items: 5;
+    --gap: 16px;
+  }
+}
+
+.kd-marquee-track {
+  display: flex;
+  gap: var(--gap);
+  width: max-content;
+  animation: kd-scroll 14s linear infinite;
+}
+
+.kd-marquee-item {
+  flex-shrink: 0;
+  /* each card fills 1/--items of the viewport minus gaps */
+  width: calc((100cqw - (var(--items) - 1) * var(--gap)) / var(--items));
+}
+
+@keyframes kd-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 .kd-prize-card {
@@ -130,7 +178,7 @@
 
 .kd-prize-category {
   position: absolute;
-  top: -28px;
+  top: -16px;
 }
 
 .kd-prize-amount {
