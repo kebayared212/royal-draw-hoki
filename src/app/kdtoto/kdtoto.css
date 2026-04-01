@@ -57,12 +57,12 @@
 
 .kd-slot-cells {
   position: absolute;
-  top: 28%;
-  bottom: 35%;
+  top: 31%;
+  bottom: 36%;
   left: 5%;
   right: 5%;
   display: flex;
-  gap: 1.4%;
+  gap: 2%;
   z-index: 10;
   overflow: hidden;
   border-radius: 8px;
@@ -117,8 +117,7 @@
 .kd-marquee-wrapper {
   --items: 3;
   --gap: 12px;
-  overflow: clip;
-  overflow-clip-margin: 32px content-box;
+  overflow: hidden;
   padding-top: 32px;
   container-type: inline-size;
 }

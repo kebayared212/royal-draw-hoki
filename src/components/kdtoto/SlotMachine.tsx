@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import SlotColumn from "./SlotColumn";
 import SoundToggle from "./SoundToggle";
-import { useSlotSound } from "@/hooks/useSlotSound";
 import Image from "next/image";
 
 interface Props {
@@ -34,6 +33,97 @@ async function fetchResultWithRetry(
   return null;
 }
 
+// ---- Sound engine (Web Audio API) ----
+function useKdSound() {
+  const [muted, setMuted] = useState(false);
+  const ctxRef = useRef<AudioContext | null>(null);
+  const rollerBufRef = useRef<AudioBuffer | null>(null);
+  const landingBufsRef = useRef<(AudioBuffer | null)[]>(new Array(8).fill(null));
+  const rollerNodeRef = useRef<AudioBufferSourceNode | null>(null);
+
+  const getCtx = useCallback(() => {
+    if (!ctxRef.current) ctxRef.current = new AudioContext();
+    return ctxRef.current;
+  }, []);
+
+  // Preload audio
+  useEffect(() => {
+    async function loadBuf(url: string) {
+      const ctx = getCtx();
+      const res = await fetch(url);
+      const arr = await res.arrayBuffer();
+      return ctx.decodeAudioData(arr);
+    }
+    loadBuf("/audio/spin_reels.WAV").then((b) => { rollerBufRef.current = b; }).catch(() => {});
+    for (let i = 0; i < 8; i++) {
+      loadBuf(`/audio/${i + 1}.wav`).then((b) => { landingBufsRef.current[i] = b; }).catch(() => {});
+    }
+  }, [getCtx]);
+
+  const playRoller = useCallback((duration: number) => {
+    if (muted) return;
+    const ctx = getCtx();
+    const buf = rollerBufRef.current;
+    if (!buf) return;
+    const run = () => {
+      try { rollerNodeRef.current?.stop(); } catch { /* ok */ }
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.7, ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.7, ctx.currentTime + duration - 0.4);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + duration);
+      gain.connect(ctx.destination);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.loop = true;
+      src.connect(gain);
+      src.start(ctx.currentTime);
+      src.stop(ctx.currentTime + duration);
+      rollerNodeRef.current = src;
+    };
+    if (ctx.state === "suspended") ctx.resume().then(run).catch(() => {}); else run();
+  }, [muted, getCtx]);
+
+  const playLanding = useCallback((digitIndex: number) => {
+    if (muted) return;
+    const ctx = getCtx();
+    const buf = landingBufsRef.current[Math.min(digitIndex, 7)];
+    if (!buf) return;
+    const run = () => {
+      const gain = ctx.createGain();
+      gain.gain.value = 0.85;
+      gain.connect(ctx.destination);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(gain);
+      src.start(ctx.currentTime);
+    };
+    if (ctx.state === "suspended") ctx.resume().then(run).catch(() => {}); else run();
+  }, [muted, getCtx]);
+
+  const playWin = useCallback(() => {
+    if (muted) return;
+    const ctx = getCtx();
+    const notes = [523, 659, 784, 1047];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.15);
+      g.gain.setValueAtTime(0.12, ctx.currentTime + i * 0.15);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.3);
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.15);
+      osc.stop(ctx.currentTime + i * 0.15 + 0.3);
+    });
+  }, [muted, getCtx]);
+
+  const toggleMute = useCallback(() => setMuted((m) => !m), []);
+
+  return { muted, toggleMute, playRoller, playLanding, playWin };
+}
+
 export default function SlotMachine({
   numbers: initialNumbers,
   periode,
@@ -41,79 +131,91 @@ export default function SlotMachine({
   countdownTargetMs,
   periodeEndMs,
   isActive,
-  resultPeriodeNumber,
 }: Props) {
   const router = useRouter();
   const [currentNumbers, setCurrentNumbers] = useState(initialNumbers);
-  const [spinning, setSpinning] = useState(false);
-  const [, setStoppedCount] = useState(0);
-  const [mounted, setMounted] = useState(false);
+  const [spinKey, setSpinKey] = useState(0);
+  const mountedRef = useRef(false);
   const [resultFetched, setResultFetched] = useState(false);
-  const { muted, toggleMute, playTick, playStop, playWin } = useSlotSound();
+  const [cellH, setCellH] = useState(0);
+  const cellsRef = useRef<HTMLDivElement>(null);
+  const { muted, toggleMute, playRoller, playLanding, playWin } = useKdSound();
+
+  // Measure cell height from the container
+  useEffect(() => {
+    const measure = () => {
+      if (cellsRef.current) setCellH(cellsRef.current.clientHeight);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
 
   // Initial spin on mount
   useEffect(() => {
-    setMounted(true);
-    setTimeout(() => setSpinning(true), 500);
+    mountedRef.current = true;
+    const t = setTimeout(() => setSpinKey(1), 300);
+    return () => clearTimeout(t);
   }, []);
+
+  // Sound effects per spin — same pattern as GameBlock
+  useEffect(() => {
+    if (spinKey <= 0) return;
+    const digits = currentNumbers.split("");
+    const totalDuration = 2.2 + (digits.length - 1) * 0.5 + 0.3;
+
+    const rollerTimer = setTimeout(() => playRoller(totalDuration), 0);
+    const landingTimers = digits.map((_, i) =>
+      setTimeout(() => playLanding(i), (2.2 + i * 0.5) * 1000),
+    );
+    // Win sound after all digits land
+    const winTimer = setTimeout(() => playWin(), totalDuration * 1000);
+
+    return () => {
+      clearTimeout(rollerTimer);
+      clearTimeout(winTimer);
+      landingTimers.forEach(clearTimeout);
+    };
+  }, [spinKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Watch for result time and fetch new result
   useEffect(() => {
     if (!isActive || !countdownTargetMs || resultFetched) return;
-
     const check = () => {
       if (Date.now() >= countdownTargetMs) {
         setResultFetched(true);
         fetchResultWithRetry(periodeNumber).then((nomor) => {
           if (nomor) {
             setCurrentNumbers(nomor);
-            setStoppedCount(0);
-            setSpinning(true);
+            setSpinKey((k) => k + 1);
           }
         });
       }
     };
-
     check();
     const interval = setInterval(check, 1000);
     return () => clearInterval(interval);
   }, [isActive, countdownTargetMs, periodeNumber, resultFetched]);
 
-  // Periodic refresh for admin changes
+  // Periodic refresh
   useEffect(() => {
     const interval = setInterval(() => router.refresh(), 120_000);
     return () => clearInterval(interval);
   }, [router]);
 
-  const handleColumnStopped = useCallback(() => {
-    setStoppedCount((prev) => {
-      const next = prev + 1;
-      if (next >= 8) {
-        setSpinning(false);
-        playWin();
-      }
-      return next;
-    });
-  }, [playWin]);
-
   const handleSpin = () => {
-    if (spinning) return;
-    setStoppedCount(0);
-    setSpinning(true);
+    setSpinKey((k) => k + 1);
   };
 
   const digits = currentNumbers.split("").map(Number);
 
-  // Countdown display
+  // Countdown
   const [countdown, setCountdown] = useState("");
   useEffect(() => {
     if (!periodeEndMs || !isActive) return;
     const tick = () => {
       const diff = periodeEndMs - Date.now();
-      if (diff <= 0) {
-        setCountdown("00:00:00");
-        return;
-      }
+      if (diff <= 0) { setCountdown("00:00:00"); return; }
       const h = String(Math.floor(diff / 3600000)).padStart(2, "0");
       const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, "0");
       const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, "0");
@@ -138,17 +240,15 @@ export default function SlotMachine({
             className="w-full h-auto block"
             priority
           />
-          <div className="kd-slot-cells">
-            {mounted &&
-              digits.map((digit, index) => (
-                <div key={index} className="kd-slot-cell">
+          <div ref={cellsRef} className="kd-slot-cells">
+            {spinKey > 0 && cellH > 0 &&
+              digits.map((digit, i) => (
+                <div key={i} className="kd-slot-cell">
                   <SlotColumn
+                    key={`${spinKey}-${i}`}
                     targetDigit={digit}
-                    index={index}
-                    spinning={spinning}
-                    onStopped={handleColumnStopped}
-                    onTick={playTick}
-                    onStop={playStop}
+                    index={i}
+                    cellH={cellH}
                   />
                 </div>
               ))}
@@ -160,7 +260,6 @@ export default function SlotMachine({
         </div>
       </div>
 
-      {/* Countdown */}
       {isActive && countdown && (
         <p className="text-white/60 font-montserrat text-sm">
           Tutup dalam:{" "}
@@ -168,21 +267,17 @@ export default function SlotMachine({
         </p>
       )}
 
-      {/* Spin Button */}
       {process.env.NODE_ENV === "development" && (
         <button
           onClick={handleSpin}
-          disabled={spinning}
-          className="px-10 py-3 rounded-full font-montserrat font-bold text-white text-lg uppercase tracking-wider transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          className="px-10 py-3 rounded-full font-montserrat font-bold text-white text-lg uppercase tracking-wider transition-all cursor-pointer"
           style={{
-            background: spinning
-              ? "linear-gradient(180deg, #7a2018, #5a1510)"
-              : "linear-gradient(180deg, #e74c3c, #c0392b)",
-            boxShadow: spinning ? "none" : "0 4px 20px rgba(231, 76, 60, 0.5)",
+            background: "linear-gradient(180deg, #e74c3c, #c0392b)",
+            boxShadow: "0 4px 20px rgba(231, 76, 60, 0.5)",
             border: "2px solid rgba(241, 196, 15, 0.3)",
           }}
         >
-          {spinning ? "Spinning..." : "SPIN"}
+          SPIN
         </button>
       )}
     </div>
