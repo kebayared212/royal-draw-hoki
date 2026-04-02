@@ -4,8 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import Balls from "./Balls";
-import DiamondBlock from "./DiamondBlock";
 const ResultNotification = dynamic(() => import("@/components/ResultNotification"), { ssr: false });
 const DevPreview = dynamic(() => import("./DevPreview"), { ssr: false });
 
@@ -321,25 +319,24 @@ export default function HeroSection({ numbers, periode, countdownTargetMs, perio
       />
 
       <div className="relative mx-3 pt-10">
-        <Balls />
-        <GameBlock numbers={currentNumbers} spinKey={spinKey} />
-        <DiamondBlock />
-        <div
-          className="relative z-20 flex flex-col items-center"
-          style={{ marginTop: "clamp(-60px, -16.5%, -40px)" }}
-        >
-          <div className="relative">
+        {/* Hero image */}
+        <div className="relative flex justify-center">
+          <div className="relative" style={{ width: "clamp(280px, 90vw, 440px)" }}>
             <Image
-              src="/images/periode.png"
-              alt="Periode"
-              width={240}
-              height={49}
-              style={{ width: "min(270px, 72vw)", height: "auto" }}
+              src="/images/angkahoki/hero.png"
+              alt="Angka Hoki"
+              width={1310}
+              height={940}
+              priority
+              className="w-full h-auto drop-shadow-[0_0_12px_rgba(255,200,0,0.5)]"
             />
-            <div className="absolute inset-0 flex items-center justify-center -top-3">
+            {/* Number overlay on brown area */}
+            <GameBlock numbers={currentNumbers} spinKey={spinKey} />
+            {/* Periode overlay on red ribbon */}
+            <div className="absolute left-0 right-0 flex justify-center" style={{ bottom: "12.4%" }}>
               <p
                 className="text-white font-semibold"
-                style={{ fontSize: "clamp(9px, 2.8vw, 13px)" }}
+                style={{ fontSize: "clamp(8px, 2.5vw, 12px)", textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}
               >
                 Periode :{" "}
                 <span className="font-bold" style={{ color: "#fde047" }}>
@@ -348,7 +345,10 @@ export default function HeroSection({ numbers, periode, countdownTargetMs, perio
               </p>
             </div>
           </div>
+        </div>
 
+        {/* Countdown below hero */}
+        <div className="relative z-20 flex flex-col items-center" style={{ marginTop: "clamp(-8px, -2vw, -4px)" }}>
           <CountdownDisplay remaining={remaining} phase={phase} />
         </div>
       </div>

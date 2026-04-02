@@ -10,7 +10,7 @@ export default function Balls() {
         height={720}
         priority
         className="z-10 absolute drop-shadow-2xl h-auto object-contain"
-        style={{ width: "clamp(100px, 42vw, 192px)", transform: "translateY(clamp(-6px, -2vw, -16px))" }}
+        style={{ width: "clamp(100px, 42vw, 192px)", transform: "translateY(clamp(-16px, -2vw, -24px))" }}
       />
       <Image
         src="/images/side-balls.png"

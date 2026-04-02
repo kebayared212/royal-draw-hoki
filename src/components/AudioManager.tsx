@@ -12,7 +12,8 @@ import { Volume2, VolumeX } from "lucide-react";
 
 const ROLLER_URL = "/audio/spin_reels.WAV";
 const LANDING_URLS = Array.from({ length: 8 }, (_, i) => `/audio/${i + 1}.wav`);
-const BG_URL = "https://media-splash.com/assets/sound/wild-west.mp3";
+const BG_URL = "/audio/bgm.WAV";
+const CLICK_URL = "/audio/click_bt.WAV";
 
 interface AudioManagerCtx {
   playRoller: (duration: number) => void;
@@ -40,6 +41,7 @@ export function AudioManager({ children }: { children: React.ReactNode }) {
   const webCtxRef = useRef<AudioContext | null>(null);
   const rollerBufRef = useRef<AudioBuffer | null>(null);
   const landingBufsRef = useRef<(AudioBuffer | null)[]>(new Array(8).fill(null));
+  const clickBufRef = useRef<AudioBuffer | null>(null);
   const rollerNodeRef = useRef<AudioBufferSourceNode | null>(null);
 
   // Background music
@@ -75,6 +77,8 @@ export function AudioManager({ children }: { children: React.ReactNode }) {
     LANDING_URLS.forEach((url, i) => {
       loadBuffer(url).then((buf) => { landingBufsRef.current[i] = buf; }).catch(() => {});
     });
+    // Load click sound
+    loadBuffer(CLICK_URL).then((buf) => { clickBufRef.current = buf; }).catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Roller: loop spin_reels.WAV selama durasi animasi
@@ -136,6 +140,35 @@ export function AudioManager({ children }: { children: React.ReactNode }) {
       startLanding();
     }
   }, [muted]);
+
+  // Global click sound
+  useEffect(() => {
+    const handleClick = () => {
+      if (muted || !started) return;
+      const ctx = getCtx();
+      const buf = clickBufRef.current;
+      if (!buf) return;
+
+      const play = () => {
+        const gain = ctx.createGain();
+        gain.gain.value = 0.6;
+        gain.connect(ctx.destination);
+        const source = ctx.createBufferSource();
+        source.buffer = buf;
+        source.connect(gain);
+        source.start(ctx.currentTime);
+      };
+
+      if (ctx.state === "suspended") {
+        ctx.resume().then(play).catch(() => {});
+      } else {
+        play();
+      }
+    };
+
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, [muted, started]);
 
   const startAudio = useCallback(() => {
     if (started) return;

@@ -161,12 +161,12 @@ export default function KdtotoGuessForm({
             className="w-full rounded-lg px-4 py-3 text-center"
             style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(241,196,15,0.2)" }}
           >
-            <p className="text-white/40 text-[10px] uppercase tracking-widest mb-1 font-montserrat">Tebakan Kamu</p>
-            <p className="font-black text-2xl tracking-widest font-jomhuria" style={{ color: "#fff70c" }}>
+            <p className="text-white text-xs uppercase tracking-widest mb-1 font-montserrat font-semibold">Tebakan Kamu</p>
+            <p className="font-black text-4xl tracking-widest font-jomhuria" style={{ color: "#fff70c" }}>
               {alreadyBet}
             </p>
           </div>
-          <p className="text-white/40 text-xs text-center italic font-montserrat">
+          <p className="text-white text-xs text-center italic font-montserrat font-semibold">
             Tunggu hasil keluaran untuk mengetahui hasilnya
           </p>
         </div>
@@ -223,7 +223,7 @@ export default function KdtotoGuessForm({
           style={{ background: "#471100", border: "1px solid rgba(241, 196, 15, 0.2)" }}
         />
 
-        {error && <p className="text-red-400 text-xs font-montserrat">{error}</p>}
+        {error && <p className="text-red-400 text-xs font-montserrat">*Kesempatan menebak angka 1 user ID hanya 1X. </p>}
         {message && <p className="text-green-400 text-xs font-montserrat">{message}</p>}
 
         <div className="flex items-center gap-3 justify-between">

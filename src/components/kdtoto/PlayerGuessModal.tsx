@@ -90,7 +90,7 @@ export default function PlayerGuessModal({ open, onClose, periodeNumber, keluara
           <div className="absolute inset-0 bg-black/70" onClick={onClose} />
 
           <motion.div
-            className="relative w-full max-w-3xl max-h-[85vh] rounded-xl overflow-hidden flex flex-col"
+            className="relative w-full max-w-lg max-h-[85vh] rounded-xl overflow-hidden flex flex-col"
             style={{ background: "#3a0a00" }}
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -98,67 +98,67 @@ export default function PlayerGuessModal({ open, onClose, periodeNumber, keluara
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
           >
             {/* Header */}
-            <div className="p-5 pb-3 text-center">
+            <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+              <h2 className="text-white font-montserrat font-semibold text-base">
+                History Tebakan
+              </h2>
               <button
                 onClick={onClose}
-                className="absolute top-3 right-4 text-gray-400 hover:text-white text-2xl cursor-pointer"
+                className="text-gray-400 hover:text-white text-xl leading-none cursor-pointer w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
               >
                 ✕
               </button>
-              <h2 className="text-white font-montserrat font-semibold text-lg flex items-center justify-center gap-2">
-                <span>🕐</span> History tebakan nomor Pemain
-              </h2>
             </div>
 
             {/* Info Bar */}
-            <div className="flex flex-wrap gap-2 px-5 pb-3">
-              <div className="flex-1 min-w-[120px] px-3 py-2 rounded-lg text-sm font-montserrat" style={{ background: "#5a1500", border: "1px solid rgba(241,196,15,0.15)" }}>
-                <span className="text-gray-400">Periode: </span>
-                <span className="text-yellow-400">{periodeNumber}</span>
+            <div className="grid grid-cols-3 gap-1.5 px-4 pb-3">
+              <div className="px-2.5 py-2 rounded-lg text-center" style={{ background: "#5a1500", border: "1px solid rgba(241,196,15,0.15)" }}>
+                <p className="text-[10px] text-neutral-400 font-montserrat">Periode</p>
+                <p className="text-yellow-400 font-montserrat font-semibold text-sm">{periodeNumber}</p>
               </div>
-              <div className="flex-1 min-w-[120px] px-3 py-2 rounded-lg text-sm font-montserrat" style={{ background: "#5a1500", border: "1px solid rgba(241,196,15,0.15)" }}>
-                <span className="text-gray-400">Keluaran: </span>
-                <span className="text-yellow-400">{keluaran}</span>
+              <div className="px-2.5 py-2 rounded-lg text-center" style={{ background: "#5a1500", border: "1px solid rgba(241,196,15,0.15)" }}>
+                <p className="text-[10px] text-neutral-400 font-montserrat">Keluaran</p>
+                <p className="text-yellow-400 font-montserrat font-semibold text-sm">{keluaran}</p>
               </div>
-              <div className="flex-1 min-w-[120px] px-3 py-2 rounded-lg text-sm font-montserrat" style={{ background: "#5a1500", border: "1px solid rgba(241,196,15,0.15)" }}>
-                <span className="text-gray-400">Tutup: </span>
-                <span className="text-yellow-400">{tutup}</span>
+              <div className="px-2.5 py-2 rounded-lg text-center" style={{ background: "#5a1500", border: "1px solid rgba(241,196,15,0.15)" }}>
+                <p className="text-[10px] text-neutral-400 font-montserrat">Tutup</p>
+                <p className="text-yellow-400 font-montserrat font-semibold text-sm">{tutup}</p>
               </div>
             </div>
 
-            {/* Table */}
-            <div className="flex-1 overflow-y-auto px-5 pb-5">
+            {/* List */}
+            <div className="flex-1 overflow-y-auto px-4 pb-4">
               {loading ? (
-                <p className="text-center text-gray-400 py-8 font-montserrat">Loading...</p>
+                <p className="text-center text-neutral-400 py-8 font-montserrat text-sm">Loading...</p>
               ) : data.length === 0 ? (
-                <p className="text-center text-gray-400 py-8 font-montserrat">Belum ada data</p>
+                <p className="text-center text-neutral-400 py-8 font-montserrat text-sm">Belum ada data</p>
               ) : (
-                <table className="w-full text-sm font-montserrat">
-                  <thead>
-                    <tr className="text-center" style={{ background: "#5a1500", position: "sticky", top: 0 }}>
-                      <th className="py-2 px-2 rounded-tl-lg">#</th>
-                      <th className="py-2 px-2">Periode</th>
-                      <th className="py-2 px-2">ID Player</th>
-                      <th className="py-2 px-2">Nomor di pasang</th>
-                      <th className="py-2 px-2 rounded-tr-lg">Waktu</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.map((g) => (
-                      <tr
-                        key={g.no}
-                        className="text-center border-b border-white/5"
-                        style={{ background: g.no % 2 === 0 ? "#4a1200" : "transparent" }}
+                <div className="space-y-2">
+                  {data.map((g) => (
+                    <div
+                      key={g.no}
+                      className="rounded-lg px-3 py-2.5 flex items-center gap-3"
+                      style={{ background: g.no % 2 === 0 ? "#4a1200" : "#521400" }}
+                    >
+                      {/* Number badge */}
+                      <div
+                        className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
+                        style={{ background: "rgba(241,196,15,0.15)", color: "#f1c40f" }}
                       >
-                        <td className="py-2.5 px-2 text-gray-300">{g.no}</td>
-                        <td className="py-2.5 px-2 text-gray-300">{g.periode}</td>
-                        <td className="py-2.5 px-2 text-gray-300">{g.idPlayer}</td>
-                        <td className="py-2.5 px-2 text-yellow-400 font-semibold">{g.nomor}</td>
-                        <td className="py-2.5 px-2 text-gray-300 text-xs">{g.waktu}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        {g.no}
+                      </div>
+                      {/* Player & time */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-neutral-100 font-montserrat text-sm truncate">{g.idPlayer}</p>
+                        <p className="text-neutral-500 font-montserrat text-[11px]">{g.waktu}</p>
+                      </div>
+                      {/* Nomor pasang */}
+                      <div className="shrink-0 text-right">
+                        <p className="text-yellow-400 font-montserrat font-bold text-base tracking-wider">{g.nomor}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </motion.div>
