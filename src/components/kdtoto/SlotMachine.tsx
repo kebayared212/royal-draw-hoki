@@ -171,9 +171,9 @@ export default function SlotMachine({
       </div>
 
       {isActive && countdown && (
-        <p className="text-white/60 font-montserrat text-sm">
+        <p className="text-white/80 font-montserrat text-sm">
           Tutup dalam:{" "}
-          <span className="text-[#fff70c] font-semibold">{countdown}</span>
+          <span className="text-white/80 font-semibold">{countdown}</span>
         </p>
       )}
 
