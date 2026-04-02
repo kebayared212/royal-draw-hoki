@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import SlotColumn from "./SlotColumn";
 import SoundToggle from "./SoundToggle";
+import { useKdReady } from "./KdReadyContext";
 import Image from "next/image";
 
 interface Props {
@@ -101,27 +102,9 @@ function useKdSound() {
     if (ctx.state === "suspended") ctx.resume().then(run).catch(() => {}); else run();
   }, [muted, getCtx]);
 
-  const playWin = useCallback(() => {
-    if (muted) return;
-    const ctx = getCtx();
-    const notes = [523, 659, 784, 1047];
-    notes.forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const g = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.15);
-      g.gain.setValueAtTime(0.12, ctx.currentTime + i * 0.15);
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.3);
-      osc.connect(g);
-      g.connect(ctx.destination);
-      osc.start(ctx.currentTime + i * 0.15);
-      osc.stop(ctx.currentTime + i * 0.15 + 0.3);
-    });
-  }, [muted, getCtx]);
-
   const toggleMute = useCallback(() => setMuted((m) => !m), []);
 
-  return { muted, toggleMute, playRoller, playLanding, playWin };
+  return { muted, toggleMute, playRoller, playLanding };
 }
 
 export default function SlotMachine({
@@ -135,11 +118,11 @@ export default function SlotMachine({
   const router = useRouter();
   const [currentNumbers, setCurrentNumbers] = useState(initialNumbers);
   const [spinKey, setSpinKey] = useState(0);
-  const mountedRef = useRef(false);
   const [resultFetched, setResultFetched] = useState(false);
   const [cellH, setCellH] = useState(0);
   const cellsRef = useRef<HTMLDivElement>(null);
-  const { muted, toggleMute, playRoller, playLanding, playWin } = useKdSound();
+  const { muted, toggleMute, playRoller, playLanding } = useKdSound();
+  const { ready } = useKdReady();
 
   // Measure cell height from the container
   useEffect(() => {
@@ -151,12 +134,12 @@ export default function SlotMachine({
     return () => window.removeEventListener("resize", measure);
   }, []);
 
-  // Initial spin on mount
+  // Start spin when welcome dialog is dismissed
   useEffect(() => {
-    mountedRef.current = true;
-    const t = setTimeout(() => setSpinKey(1), 300);
+    if (!ready) return;
+    const t = setTimeout(() => setSpinKey((k) => k + 1), 300);
     return () => clearTimeout(t);
-  }, []);
+  }, [ready]);
 
   // Sound effects per spin — same pattern as GameBlock
   useEffect(() => {
@@ -168,12 +151,8 @@ export default function SlotMachine({
     const landingTimers = digits.map((_, i) =>
       setTimeout(() => playLanding(i), (2.2 + i * 0.5) * 1000),
     );
-    // Win sound after all digits land
-    const winTimer = setTimeout(() => playWin(), totalDuration * 1000);
-
     return () => {
       clearTimeout(rollerTimer);
-      clearTimeout(winTimer);
       landingTimers.forEach(clearTimeout);
     };
   }, [spinKey]); // eslint-disable-line react-hooks/exhaustive-deps

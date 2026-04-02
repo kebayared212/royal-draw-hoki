@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import Image from "next/image";
 
 interface SlotColumnProps {
   targetDigit: number;
@@ -8,11 +9,10 @@ interface SlotColumnProps {
   cellH: number;
 }
 
-const CYCLES = 3;
+const CYCLES = 6;
 const STRIP_LENGTH = 10 * CYCLES;
 
 export default function SlotColumn({ targetDigit, index, cellH }: SlotColumnProps) {
-  // Strip: target digit first (landing position at y=0), then random digits below
   const strip = [
     targetDigit,
     ...Array.from({ length: STRIP_LENGTH }, (_, i) => i % 10),
@@ -45,20 +45,15 @@ export default function SlotColumn({ targetDigit, index, cellH }: SlotColumnProp
             className="flex items-center justify-center select-none"
             style={{ height: cellH }}
           >
-            <span
-              className="font-jomhuria block"
-              style={{
-                fontSize: cellH * 0.85,
-                lineHeight: 1,
-                transform: "translateY(10%)",
-                background: "linear-gradient(180deg, #f9e547 0%, #e67e22 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
-              {digit}
-            </span>
+            <Image
+              src={`/images/kdtoto/number/${digit}.png`}
+              alt={String(digit)}
+              width={51}
+              height={61}
+              className="w-auto"
+              style={{ height: "48%" }}
+              draggable={false}
+            />
           </div>
         ))}
       </motion.div>

@@ -40,10 +40,10 @@ function PrizeCard({ prize }: { prize: PrizeItem }) {
           alt={prize.type}
           width={40}
           height={40}
-          className="w-8 h-8 object-contain"
+          className="h-7 w-auto"
         />
       </span>
-      <span className="text-[10px] text-gray-400 font-montserrat">
+      <span className="text-[10px] text-neutral-300 font-montserrat">
         Hadiah:
       </span>
       <span className="kd-prize-amount font-jomhuria">{prize.prize}</span>

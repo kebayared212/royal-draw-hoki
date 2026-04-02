@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Jomhuria, Montserrat } from "next/font/google";
+import { KdReadyProvider } from "@/components/kdtoto/KdReadyContext";
+import KdWelcomeDialog from "@/components/kdtoto/WelcomeDialog";
 import "./kdtoto.css";
 
 const jomhuria = Jomhuria({
@@ -15,7 +17,7 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "KD TOTO - 8 Angka Hoki",
+  title: "KDTOTO - 8 Angka Hoki",
   description: "Tebak angka hoki dan menangkan hadiah jutaan rupiah!",
 };
 
@@ -25,9 +27,12 @@ export default function KdtotoLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div data-theme="kdtoto" className={`${jomhuria.variable} ${montserrat.variable} relative min-h-screen text-white`}>
-      <div className="kd-bg-overlay" />
-      {children}
-    </div>
+    <KdReadyProvider>
+      <div data-theme="kdtoto" className={`${jomhuria.variable} ${montserrat.variable} relative min-h-screen text-white`}>
+        <div className="kd-bg-overlay" />
+        <KdWelcomeDialog />
+        {children}
+      </div>
+    </KdReadyProvider>
   );
 }

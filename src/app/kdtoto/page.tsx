@@ -51,11 +51,11 @@ export default async function KdtotoPage() {
           isActive={isActive}
           periodeStartDisplay={periodeStartDisplay}
         />
-        <KdtotoHistoryTable data={history} />
+        <KdtotoHistoryTable data={history.slice(0, 6)} />
       </div>
 
-      <footer className="text-center text-xs text-gray-500 py-4 font-montserrat">
-        © 2025 KD TOTO. All rights reserved.
+      <footer className="text-center text-sm text-neutral-100 py-4 font-montserrat font-semibold">
+        © 2025 KDTOTO. All rights reserved.
       </footer>
     </div>
   );
