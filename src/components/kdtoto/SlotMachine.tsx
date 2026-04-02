@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import SlotColumn from "./SlotColumn";
 import SoundToggle from "./SoundToggle";
 import { useKdReady } from "./KdReadyContext";
+import { useSlotSound } from "@/hooks/useSlotSound";
 import Image from "next/image";
 
 interface Props {
@@ -34,79 +35,6 @@ async function fetchResultWithRetry(
   return null;
 }
 
-// ---- Sound engine (Web Audio API) ----
-function useKdSound() {
-  const [muted, setMuted] = useState(false);
-  const ctxRef = useRef<AudioContext | null>(null);
-  const rollerBufRef = useRef<AudioBuffer | null>(null);
-  const landingBufsRef = useRef<(AudioBuffer | null)[]>(new Array(8).fill(null));
-  const rollerNodeRef = useRef<AudioBufferSourceNode | null>(null);
-
-  const getCtx = useCallback(() => {
-    if (!ctxRef.current) ctxRef.current = new AudioContext();
-    return ctxRef.current;
-  }, []);
-
-  // Preload audio
-  useEffect(() => {
-    async function loadBuf(url: string) {
-      const ctx = getCtx();
-      const res = await fetch(url);
-      const arr = await res.arrayBuffer();
-      return ctx.decodeAudioData(arr);
-    }
-    loadBuf("/audio/spin_reels.WAV").then((b) => { rollerBufRef.current = b; }).catch(() => {});
-    for (let i = 0; i < 8; i++) {
-      loadBuf(`/audio/${i + 1}.wav`).then((b) => { landingBufsRef.current[i] = b; }).catch(() => {});
-    }
-  }, [getCtx]);
-
-  const playRoller = useCallback((duration: number) => {
-    if (muted) return;
-    const ctx = getCtx();
-    const buf = rollerBufRef.current;
-    if (!buf) return;
-    const run = () => {
-      try { rollerNodeRef.current?.stop(); } catch { /* ok */ }
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.7, ctx.currentTime + 0.1);
-      gain.gain.setValueAtTime(0.7, ctx.currentTime + duration - 0.4);
-      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + duration);
-      gain.connect(ctx.destination);
-      const src = ctx.createBufferSource();
-      src.buffer = buf;
-      src.loop = true;
-      src.connect(gain);
-      src.start(ctx.currentTime);
-      src.stop(ctx.currentTime + duration);
-      rollerNodeRef.current = src;
-    };
-    if (ctx.state === "suspended") ctx.resume().then(run).catch(() => {}); else run();
-  }, [muted, getCtx]);
-
-  const playLanding = useCallback((digitIndex: number) => {
-    if (muted) return;
-    const ctx = getCtx();
-    const buf = landingBufsRef.current[Math.min(digitIndex, 7)];
-    if (!buf) return;
-    const run = () => {
-      const gain = ctx.createGain();
-      gain.gain.value = 0.85;
-      gain.connect(ctx.destination);
-      const src = ctx.createBufferSource();
-      src.buffer = buf;
-      src.connect(gain);
-      src.start(ctx.currentTime);
-    };
-    if (ctx.state === "suspended") ctx.resume().then(run).catch(() => {}); else run();
-  }, [muted, getCtx]);
-
-  const toggleMute = useCallback(() => setMuted((m) => !m), []);
-
-  return { muted, toggleMute, playRoller, playLanding };
-}
-
 export default function SlotMachine({
   numbers: initialNumbers,
   periode,
@@ -121,7 +49,7 @@ export default function SlotMachine({
   const [resultFetched, setResultFetched] = useState(false);
   const [cellH, setCellH] = useState(0);
   const cellsRef = useRef<HTMLDivElement>(null);
-  const { muted, toggleMute, playRoller, playLanding } = useKdSound();
+  const { muted, toggleMute, playStop, playWin } = useSlotSound();
   const { ready } = useKdReady();
 
   // Measure cell height from the container
@@ -141,19 +69,22 @@ export default function SlotMachine({
     return () => clearTimeout(t);
   }, [ready]);
 
-  // Sound effects per spin — same pattern as GameBlock
+  // Sound effects per spin
   useEffect(() => {
     if (spinKey <= 0) return;
     const digits = currentNumbers.split("");
-    const totalDuration = 2.2 + (digits.length - 1) * 0.5 + 0.3;
+    const totalDuration = 2.2 + (digits.length - 1) * 0.5;
 
-    const rollerTimer = setTimeout(() => playRoller(totalDuration), 0);
+    // playStop per digit landing
     const landingTimers = digits.map((_, i) =>
-      setTimeout(() => playLanding(i), (2.2 + i * 0.5) * 1000),
+      setTimeout(() => playStop(), (2.2 + i * 0.5) * 1000),
     );
+    // playWin after all digits land
+    const winTimer = setTimeout(() => playWin(), (totalDuration + 0.3) * 1000);
+
     return () => {
-      clearTimeout(rollerTimer);
       landingTimers.forEach(clearTimeout);
+      clearTimeout(winTimer);
     };
   }, [spinKey]); // eslint-disable-line react-hooks/exhaustive-deps
 

@@ -60,13 +60,13 @@ export default function KdWelcomeDialog() {
             backgroundClip: "text",
           }}
         >
-          Selamat Datang!
+          Hi selamat datang BOS!
         </h2>
 
         <p className="text-white text-sm mb-6 leading-relaxed">
-          Tebak 8 angka hoki kamu dan
+          Tebak promosi angka 8 hokimu sekarang disini
           <br />
-          menangkan hadiah hingga ratusan juta!
+          dan menangkan hadiah hingga Rp 50.000.000 cuma - cuma!
         </p>
 
         {/* CTA Button */}
@@ -81,11 +81,11 @@ export default function KdWelcomeDialog() {
             textShadow: "0 1px 3px rgba(0,0,0,0.4)",
           }}
         >
-          Mulai Bermain
+          KLIK DISINI UNTUK BERMAIN
         </button>
 
         <p className="text-white text-xs mt-3">
-          Dengan melanjutkan, kamu menyetujui syarat &amp; ketentuan berlaku.
+          Dengan melanjutkan klik button, Anda menyetujui syarat &amp; ketentuan berlaku.
         </p>
 
         {/* Corner ornaments */}
