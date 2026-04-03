@@ -85,14 +85,14 @@ input::placeholder {
   -webkit-backdrop-filter: blur(48px);
   box-shadow:
     inset 0 1px 3px rgba(255, 255, 255, 0.9),
-    inset 0 7px 22px #ffb56b,
-    inset 0 14px 38px #ff8e48,
+    inset 0 7px 22px #FFB56B,
+    inset 0 20px 38px #FF8E48,
     inset 0 45px 68px rgba(0, 0, 0, 0.5);
 }
 
 .bg-gradient-orange {
   background: #000000;
-  background-image: linear-gradient(to bottom, #FFBE6A, #FF9100);
+  background-image: linear-gradient(to bottom, #FF8031, #E34D02);
   box-shadow: 0 4px 15px rgba(190,110,0,0.4);
   border: 1px solid rgba(255, 255, 255, 0.3);
   font-weight: 800;

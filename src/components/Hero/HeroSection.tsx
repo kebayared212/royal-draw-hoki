@@ -298,6 +298,7 @@ export default function HeroSection({ numbers, periode, countdownTargetMs, perio
       />
 
       <DevPreview
+        onSpin={() => setSpinKey((k) => k + 1)}
         onWin={() => setNotif({ show: true, status: "win", bet: "1234", result: "56781234", prize: prizes.find((p) => p.type === "4D")?.prize ?? "10 Juta" })}
         onLose={() => setNotif({ show: true, status: "lose", bet: "9999", result: "56781234", prize: "" })}
         onNoBet={() => setNotif({ show: true, status: "no_bet", bet: "", result: "56781234", prize: "" })}
@@ -339,8 +340,8 @@ export default function HeroSection({ numbers, periode, countdownTargetMs, perio
                 style={{ fontSize: "clamp(8px, 2.5vw, 12px)", textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}
               >
                 Periode :{" "}
-                <span className="font-bold" style={{ color: "#fde047" }}>
-                  {resultPeriodeNumber || periodeNumber || periode || "-"}
+                <span className="font-bold" style={{ color: "#FBFF00" }}>
+                  {periode || periodeNumber || resultPeriodeNumber || "-"}
                 </span>
               </p>
             </div>

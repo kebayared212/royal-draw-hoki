@@ -48,7 +48,7 @@ export default async function RoyalDrawPage() {
         isActive={isActive}
         periodeStartDisplay={periodeStartDisplay}
       />
-      <HistoryTable data={history} />
+      <HistoryTable data={history.slice(0, 6)} />
       <div
         className="circle-bg pointer-events-none -z-10"
         style={{ top: "1253px", left: "593px" }}

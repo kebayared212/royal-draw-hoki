@@ -9,7 +9,7 @@ export default function SyaratKetentuan() {
     <div className="mx-4 mb-4">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-5 py-2 rounded-2xl text-white bg-gradient-orange"
+        className="w-full flex items-center justify-between px-5 py-3 rounded-xl text-white bg-gradient-orange"
       >
         <span>Syarat &amp; Ketentuan Promo</span>
         <svg

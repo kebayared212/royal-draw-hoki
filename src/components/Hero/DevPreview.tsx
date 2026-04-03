@@ -4,13 +4,19 @@ interface Props {
   onWin: () => void;
   onLose: () => void;
   onNoBet: () => void;
+  onSpin?: () => void;
 }
 
-export default function DevPreview({ onWin, onLose, onNoBet }: Props) {
+export default function DevPreview({ onWin, onLose, onNoBet, onSpin }: Props) {
   if (process.env.NODE_ENV !== "development") return null;
 
   return (
     <div className="fixed bottom-20 left-4 z-50 flex flex-col gap-1">
+      {onSpin && (
+        <button onClick={onSpin} className="text-[10px] font-bold px-2 py-1 rounded bg-blue-600 text-white opacity-70">
+          Demo Spin
+        </button>
+      )}
       <button onClick={onWin} className="text-[10px] font-bold px-2 py-1 rounded bg-yellow-600 text-white opacity-70">
         Demo Menang
       </button>

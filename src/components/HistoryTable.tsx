@@ -51,7 +51,7 @@ export default function HistoryTable({ data, bare = false }: HistoryTableProps) 
     <div
       id="history"
       className="mx-4 mb-10 rounded-2xl overflow-hidden"
-      style={{ background: "#1C1101", border: "1px solid #3d1a00", boxShadow: "inset 0 2px 8px rgba(255,140,0,0.6)" }}
+      style={{ background: "#1C1101", border: "1px solid #3d1a00", boxShadow: "inset 0 2px 2.2px #EC7229" }}
     >
       <div className="py-4 px-4 text-center">
         <h2 className="text-white font-bold text-base">

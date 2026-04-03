@@ -23,7 +23,7 @@ export default function PrizeCardsSwiper({ prizes }: { prizes: Prize[] }) {
         loop
         autoplay={{ delay: 0 }}
         speed={3000}
-        slidesPerView={2.5}
+        slidesPerView={2.7}
         spaceBetween={12}
         className="prize-swiper"
       >
@@ -31,22 +31,22 @@ export default function PrizeCardsSwiper({ prizes }: { prizes: Prize[] }) {
           <SwiperSlide key={item.type} style={{ marginTop: "12px" }}>
             <div className="flex flex-col items-center">
               <div
-                className="font-bold text-sm px-3 py-0.5 rounded-full z-10"
+                className="font-bold text-[16px] px-4.5 py-1 rounded-lg z-10"
                 style={{
-                  background: "linear-gradient(180deg, #FAB861 0%, #F79009 100%)",
+                  background: "linear-gradient(180deg, #1C1101 0%, #472A00 100%)",
                   color: "#ffffff",
-                  marginBottom: "-10px",
-                  boxShadow: "0 2px 8px rgba(255,140,0,0.6)",
+                  marginBottom: "-14px",
+                  boxShadow: "inset 0 2.5px 2px 0 #EC7229",
                   textShadow: "0 1px 2px rgba(0,0,0,0.3)",
                 }}
               >
                 {item.type}
               </div>
               <div className="w-full rounded-3xl pt-4 pb-2 px-5 text-center prize-card">
-                <div className="text-white text-[12px] opacity-80">Hadiah :</div>
+                <div className="text-white text-sm opacity-80">Hadiah :</div>
                 <div
-                  className="font-extrabold text-lg italic"
-                  style={{ color: "#FFA100", textShadow: "0 1px 3px rgba(0,0,0,0.4)" }}
+                  className="text-2xl italic"
+                  style={{ color: "#FFEB33", textShadow: "0 1px 3px rgba(0,0,0,0.4)", fontWeight: "900" }}
                 >
                   {item.prize}
                 </div>
